@@ -1,0 +1,99 @@
+{
+  // ========================================
+  // 技能元数据配置文件
+  // ========================================
+  // 说明：这个文件定义了技能的基本信息和参数结构
+  // 当用户调用 /git-helper 命令时，Claude 会读取此文件
+
+  // 技能名称（必需）
+  // 规则：使用 kebab-case 格式，小写字母和连字符
+  "name": "git-helper",
+
+  // 技能显示名称（可选）
+  // 用于在帮助信息中展示
+  "displayName": "Git Operations Helper",
+
+  // 技能描述（必需）
+  // 简短说明这个技能做什么
+  "description": "Git 操作助手，支持状态查看、提交、分支、推送等常用操作",
+
+  // 版本号（必需）
+  // 使用语义化版本号：主版本.次版本.修订号
+  "version": "1.0.0",
+
+  // 作者信息（可选）
+  "author": "Auto-Skills Team",
+
+  // 参数定义（可选但推荐）
+  // 定义用户可以传递给技能的参数
+  "parameters": {
+    // 参数类型
+    "type": "object",
+
+    // 参数列表
+    "properties": {
+      // action 参数：指定要执行的操作类型
+      "action": {
+        "type": "string",
+        // 可选值枚举
+        "enum": [
+          "status",       // 查看状态
+          "add",          // 添加文件到暂存区
+          "commit",       // 提交更改
+          "push",         // 推送到远程
+          "pull",         // 从远程拉取
+          "branch",       // 分支操作
+          "checkout",     // 切换分支
+          "merge",        // 合并分支
+          "log",          // 查看提交历史
+          "diff",         // 查看差异
+          "reset",        // 重置操作
+          "clean",        // 清理未跟踪文件
+          "stash"         // 暂存更改
+        ],
+        "description": "操作类型：status=状态, add=添加, commit=提交, push=推送, pull=拉取, branch=分支, checkout=切换, merge=合并, log=日志, diff=差异, reset=重置, clean=清理, stash=暂存"
+      },
+
+      // files 参数：指定文件列表
+      "files": {
+        "type": "string",
+        "description": "文件列表，用逗号分隔，或使用 '.' 表示所有文件"
+      },
+
+      // message 参数：提交信息
+      "message": {
+        "type": "string",
+        "description": "提交信息，用于 commit 操作"
+      },
+
+      // branch 参数：分支名称
+      "branch": {
+        "type": "string",
+        "description": "分支名称，用于 branch、checkout、merge 操作"
+      },
+
+      // remote 参数：远程仓库名称
+      "remote": {
+        "type": "string",
+        "description": "远程仓库名称，默认为 origin",
+        "default": "origin"
+      },
+
+      // force 参数：强制操作
+      "force": {
+        "type": "boolean",
+        "description": "是否强制执行（如强制推送），默认为 false"
+      },
+
+      // dryRun 参数：预演模式
+      "dryRun": {
+        "type": "boolean",
+        "description": "只显示将要执行的命令，不实际执行，默认为 false"
+      }
+    },
+
+    // 必需参数列表
+    // 指定哪些参数是必须提供的
+    "required": ["action"]
+  }
+}
