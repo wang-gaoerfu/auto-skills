@@ -64,7 +64,7 @@ git push origin feature/your-feature-name
 2. 使用 `skills/templates/basic-skill/` 作为模板
 3. 确保包含以下文件：
    - `skill.json` - 技能元数据
-   - `prompt.md` - 核心提示词
+   - `SKILL.md` - 核心提示词
    - `description.md` - 使用说明
 
 ### 技能规范
@@ -94,7 +94,7 @@ git push origin feature/your-feature-name
 }
 ```
 
-#### prompt.md
+#### SKILL.md
 
 - 以清晰的标题开头
 - 使用 `{{if}}` 条件处理参数

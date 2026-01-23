@@ -33,7 +33,7 @@ ls .claude/skills/my-skill/
 
 # 2. 确认文件存在
 ls my-skill/skill.json
-ls my-skill/prompt.md
+ls my-skill/SKILL.md
 
 # 3. 重启 Claude Code
 # 完全退出后重新启动
@@ -82,7 +82,7 @@ rm .claude/skills
 
 ### Q: 参数没有传递进来？
 
-**症状**: 在 prompt.md 中使用 `{{param}}` 显示为空
+**症状**: 在 SKILL.md 中使用 `{{param}}` 显示为空
 
 **原因**:
 1. skill.json 中参数名拼写错误
@@ -102,7 +102,7 @@ rm .claude/skills
 ```
 
 ```markdown
-// prompt.md 中使用相同的名称
+// SKILL.md 中使用相同的名称
 {{if myParam}}
 参数值: {{myParam}}
 {{endif}}
@@ -225,7 +225,7 @@ cat "My Documents/file.txt"
 
 **问题**: 大文件输出太长
 
-**方法**: 在 prompt.md 中添加条件
+**方法**: 在 SKILL.md 中添加条件
 
 ```markdown
 {{if verbose}}
@@ -273,7 +273,7 @@ cat "My Documents/file.txt"
 
 ```markdown
 可以这样做：
-1. 在 prompt.md 中描述要调用的技能的功能
+1. 在 SKILL.md 中描述要调用的技能的功能
 2. 让 AI 按照该技能的提示词执行
 ```
 
@@ -343,7 +343,7 @@ my-awesome-skill/
 ├── LICENSE
 ├── my-skill/
 │   ├── skill.json
-│   ├── prompt.md
+│   ├── SKILL.md
 │   └── description.md
 └── examples/
 ```

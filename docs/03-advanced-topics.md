@@ -48,7 +48,7 @@
 }
 ```
 
-在 prompt.md 中处理：
+在 SKILL.md 中处理：
 
 ```markdown
 {{if files}}
@@ -298,7 +298,7 @@
 每个技能都应包含：
 
 - `skill.json` - 元数据
-- `prompt.md` - 核心逻辑
+- `SKILL.md` - 核心逻辑
 - `description.md` - 使用说明
 
 ### 5. 版本管理

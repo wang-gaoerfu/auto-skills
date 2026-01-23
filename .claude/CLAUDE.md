@@ -46,7 +46,7 @@ auto-skills/
 ```
 skill-name/
 ├── skill.json      # 【必需】技能元数据配置
-├── prompt.md       # 【必需】核心提示词
+├── SKILL.md       # 【必需】核心提示词
 └── description.md  # 【推荐】使用说明文档
 ```
 
@@ -60,7 +60,7 @@ skill-name/
 - `author`: 作者信息
 - `parameters`: 参数定义
 
-### prompt.md 说明
+### SKILL.md 说明
 
 核心提示词，定义技能的行为：
 - 角色定义
@@ -79,7 +79,7 @@ skill-name/
 1. 复制模板 `skills/templates/basic-skill/`
 2. 重命名为新的技能名称
 3. 编辑 `skill.json` 配置参数
-4. 编写 `prompt.md` 定义行为
+4. 编写 `SKILL.md` 定义行为
 5. 编写 `description.md` 使用说明
 6. 测试技能功能
 7. 更新相关文档

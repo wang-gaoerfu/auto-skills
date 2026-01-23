@@ -9,7 +9,7 @@
 1. [准备工作](#准备工作)
 2. [创建技能目录](#创建技能目录)
 3. [编写 skill.json](#编写-skilljson)
-4. [编写 prompt.md](#编写-promptmd)
+4. [编写 SKILL.md](#编写-promptmd)
 5. [编写 description.md](#编写-descriptionmd)
 6. [测试技能](#测试技能)
 7. [常见问题](#常见问题)
@@ -64,7 +64,7 @@ mkdir skills/builtin/my-skill
 
 # 创建文件
 touch skills/builtin/my-skill/skill.json
-touch skills/builtin/my-skill/prompt.md
+touch skills/builtin/my-skill/SKILL.md
 touch skills/builtin/my-skill/description.md
 ```
 
@@ -142,7 +142,7 @@ touch skills/builtin/my-skill/description.md
 
 ---
 
-## 编写 prompt.md
+## 编写 SKILL.md
 
 这是技能的核心，定义 AI 如何工作：
 
@@ -320,7 +320,7 @@ touch skills/builtin/my-skill/description.md
 
 ### 输出更多调试信息
 
-在 prompt.md 中添加调试输出：
+在 SKILL.md 中添加调试输出：
 
 ```markdown
 ## 调试信息
@@ -368,7 +368,7 @@ touch skills/builtin/my-skill/description.md
 }
 ```
 
-### 在 prompt.md 中使用
+### 在 SKILL.md 中使用
 
 ```markdown
 {{if exclude}}
@@ -394,7 +394,7 @@ A: 确保 `.claude/skills/` 链接正确，或重启 Claude Code。
 
 ### Q: 输出格式不对？
 
-A: 检查 prompt.md 中的输出模板，确保使用正确的格式化语法。
+A: 检查 SKILL.md 中的输出模板，确保使用正确的格式化语法。
 
 ---
 

@@ -8,7 +8,7 @@
 
 1. [技能目录结构](#技能目录结构)
 2. [skill.json 详解](#skilljson-详解)
-3. [prompt.md 详解](#promptmd-详解)
+3. [SKILL.md 详解](#promptmd-详解)
 4. [description.md 详解](#descriptionmd-详解)
 5. [可选文件](#可选文件)
 
@@ -21,7 +21,7 @@
 ```
 my-skill/
 ├── skill.json      # 【必需】技能元数据配置
-├── prompt.md       # 【必需】核心提示词
+├── SKILL.md       # 【必需】核心提示词
 ├── description.md  # 【推荐】使用说明文档
 ├── examples/       # 【可选】使用示例
 │   └── example1.md
@@ -33,7 +33,7 @@ my-skill/
 | 文件 | 必需 | 作用 |
 |------|------|------|
 | `skill.json` | 是 | 定义技能的基本信息和参数 |
-| `prompt.md` | 是 | 核心提示词，定义技能的行为 |
+| `SKILL.md` | 是 | 核心提示词，定义技能的行为 |
 | `description.md` | 否 | 对用户的详细使用说明 |
 | `examples/` | 否 | 使用示例集合 |
 | `schema.json` | 否 | 参数的 JSON Schema 定义 |
@@ -174,7 +174,7 @@ my-skill/
 
 ---
 
-## prompt.md 详解
+## SKILL.md 详解
 
 ### 基本结构
 
