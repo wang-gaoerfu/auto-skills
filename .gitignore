@@ -1,2 +1,9 @@
 # .claude/skills 是符号链接，源文件已在 skills/ 下追踪
 .claude/skills/
+
+# MCP 配置（包含 API 密钥）
+.mcp.json
+
+# SQLite 数据库
+data/*.db
+data/*.db-journal
