@@ -2,7 +2,7 @@
 .claude/skills/
 
 # MCP 配置（包含 API 密钥）
-.mcp.json
+.claude/mcp.json
 
 # SQLite 数据库
 data/*.db
