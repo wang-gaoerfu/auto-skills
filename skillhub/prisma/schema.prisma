@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./skillhub.db"
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  description String
+  version     String
+  category    String
+  path        String   // 相对于 skills/ 目录的路径
+  enabled     Boolean  @default(true)
+  useCount    Int      @default(0)
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  favorites   Favorite[]
+  tags        SkillTag[]
+
+  @@index([category])
+  @@index([enabled])
+}
+
+model MCPServer {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        String
+  config      String   // JSON 存储配置
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([enabled])
+}
+
+model WorkflowHistory {
+  id          String   @id @default(cuid())
+  type        String   // requirements-analysis, etc.
+  title       String
+  input       String
+  output      String   // JSON 存储结果
+  status      String   // running, completed, failed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([status])
+}
+
+model Favorite {
+  id          String   @id @default(cuid())
+  skillId     String
+  createdAt   DateTime @default(now())
+
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([skillId])
+}
+
+model Tag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  color       String?
+  createdAt   DateTime @default(now())
+
+  skills      SkillTag[]
+}
+
+model SkillTag {
+  id          String   @id @default(cuid())
+  skillId     String
+  tagId       String
+  createdAt   DateTime @default(now())
+
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  tag         Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([skillId, tagId])
+  @@index([skillId])
+  @@index([tagId])
+}
+
+model AppSettings {
+  id          String   @id @default("default")
+  theme       String   @default("light")
+  sidebarCollapsed Boolean @default(false)
+  updatedAt   DateTime @updatedAt
+}

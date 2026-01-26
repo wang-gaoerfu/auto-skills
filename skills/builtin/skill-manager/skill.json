@@ -1,0 +1,32 @@
+{
+  "name": "skill-manager",
+  "displayName": "Skills 管理助手",
+  "description": "管理本地 skills 的增删改查，支持智能推荐、快速创建、编辑和删除技能",
+  "version": "1.0.0",
+  "author": "Auto-Skills Team",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["list", "recommend", "create", "delete", "edit"],
+        "description": "操作类型：list=列出技能, recommend=智能推荐, create=创建技能, delete=删除技能, edit=编辑技能"
+      },
+      "query": {
+        "type": "string",
+        "description": "需求描述（用于 recommend）或技能名称（用于 create/delete/edit）"
+      },
+      "file": {
+        "type": "string",
+        "enum": ["skill.json", "SKILL.md", "description.md"],
+        "description": "要编辑的文件（用于 edit）"
+      },
+      "dry-run": {
+        "type": "boolean",
+        "description": "预演模式，只显示操作不实际执行",
+        "default": false
+      }
+    },
+    "required": ["action"]
+  }
+}
