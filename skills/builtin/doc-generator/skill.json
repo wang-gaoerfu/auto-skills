@@ -1,0 +1,32 @@
+{
+  "name": "doc-generator",
+  "displayName": "需求文档生成器",
+  "description": "生成结构化的 Markdown 需求文档",
+  "version": "1.0.0",
+  "author": "Auto-Skills Team",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "output-path": {
+        "type": "string",
+        "description": "输出文件路径（如：requirements/project-name.md）"
+      },
+      "include-toc": {
+        "type": "boolean",
+        "description": "是否包含目录",
+        "default": true
+      },
+      "include-metadata": {
+        "type": "boolean",
+        "description": "是否包含文档元信息",
+        "default": true
+      },
+      "add-mermaid": {
+        "type": "boolean",
+        "description": "是否添加 Mermaid 图表",
+        "default": true
+      }
+    },
+    "required": []
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "task-clarify",
+  "displayName": "Task Clarify",
+  "description": "任务澄清与拆解助手，帮助将模糊需求转化为可执行的任务清单",
+  "version": "1.0.0",
+  "author": "Auto-Skills",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "skip-questions": {
+        "type": "boolean",
+        "description": "跳过追问环节，直接基于现有信息输出",
+        "default": false
+      },
+      "detail-level": {
+        "type": "string",
+        "enum": ["brief", "normal", "detailed"],
+        "description": "输出详细程度：brief=精简, normal=正常, detailed=详细",
+        "default": "normal"
+      }
+    },
+    "required": []
+  }
+}

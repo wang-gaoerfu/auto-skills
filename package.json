@@ -22,5 +22,8 @@
     "test": "echo \"Run your tests here\" && exit 0",
     "validate": "node scripts/validate-skills.js"
   },
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "^2026.1.14"
+  },
   "devDependencies": {}
 }

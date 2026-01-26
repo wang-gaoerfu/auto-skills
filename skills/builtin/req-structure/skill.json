@@ -1,0 +1,24 @@
+{
+  "name": "req-structure",
+  "displayName": "需求结构化",
+  "description": "将需求要素整理为标准的需求规格说明书结构",
+  "version": "1.0.0",
+  "author": "Auto-Skills Team",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "template": {
+        "type": "string",
+        "enum": ["srs-practical", "srs-formal", "agile-backlog", "user-story"],
+        "description": "文档模板类型",
+        "default": "srs-practical"
+      },
+      "include-diagrams": {
+        "type": "boolean",
+        "description": "是否包含图表建议（使用 Mermaid 语法）",
+        "default": true
+      }
+    },
+    "required": []
+  }
+}

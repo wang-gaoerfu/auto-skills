@@ -1,0 +1,30 @@
+{
+  "name": "req-clarify",
+  "displayName": "需求分析助手",
+  "description": "通过对话收集和分析软件需求，输出结构化需求要素",
+  "version": "1.0.0",
+  "author": "Auto-Skills Team",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "project-type": {
+        "type": "string",
+        "enum": ["web", "mobile", "desktop", "api", "general"],
+        "description": "项目类型，影响追问重点",
+        "default": "general"
+      },
+      "skip-questions": {
+        "type": "boolean",
+        "description": "跳过追问，直接基于现有信息分析",
+        "default": false
+      },
+      "output-format": {
+        "type": "string",
+        "enum": ["concise", "standard", "detailed"],
+        "description": "输出详细程度",
+        "default": "standard"
+      }
+    },
+    "required": []
+  }
+}

@@ -19,9 +19,27 @@ Auto-Skills 是一个面向 Claude Code 用户的开源技能库，提供：
 
 | 技能名称 | 功能描述 | 状态 |
 |---------|---------|------|
-| `/file-ops` | 文件操作助手 - 搜索、读取、编辑文件 | 开发中 |
-| `/git-helper` | Git 操作助手 - 提交、分支、推送 | 开发中 |
+| `/file-ops` | 文件操作助手 - 搜索、读取、编辑文件 | ✅ 完成 |
+| `/git-helper` | Git 操作助手 - 提交、分支、推送 | ✅ 完成 |
+| `/task-clarify` | 任务澄清助手 - 通过对话明确任务目标 | ✅ 完成 |
+| `/req-clarify` | 需求分析助手 - 通过对话收集软件需求 | ✅ 完成 |
+| `/req-structure` | 需求结构化 - 整理为标准文档格式 | ✅ 完成 |
+| `/doc-generator` | 文档生成器 - 生成 Markdown 需求文档 | ✅ 完成 |
 | `/search-helper` | 代码搜索助手 - 智能代码查找 | 计划中 |
+
+### 专题系统
+
+#### 需求分析系统
+
+完整的需求分析解决方案，包含三个协作技能：
+
+```
+原始需求 → /req-clarify → /req-structure → /doc-generator → 需求文档
+```
+
+- [需求分析概述](docs/requirement-analysis/00-overview.md)
+- [快速开始](docs/requirement-analysis/01-quick-start.md)
+- [使用示例](docs/requirement-analysis/02-examples.md)
 
 ---
 
@@ -82,6 +100,10 @@ auto-skills/
 
 - [高级主题](docs/03-advanced-topics.md) - 参数、条件、组合
 - [常见问题](docs/04-faq.md) - 答疑解惑
+
+### 专题系统
+
+- [需求分析系统](docs/requirement-analysis/00-overview.md) - 完整的需求分析解决方案
 
 ---
 

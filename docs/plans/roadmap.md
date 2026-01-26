@@ -84,6 +84,16 @@ Auto-Skills 的愿景是打造一个开箱即用的 Claude Code 技能合集，�
 |---------|------|------|------|
 | file-ops | 1.0.0 | 文件操作助手 | ✅ |
 | git-helper | 1.0.0 | Git 操作助手 | ✅ |
+| task-clarify | 1.0.0 | 任务澄清助手 | ✅ |
+| req-clarify | 1.0.0 | 需求分析助手 | ✅ |
+| req-structure | 1.0.0 | 需求结构化 | ✅ |
+| doc-generator | 1.0.0 | 文档生成器 | ✅ |
+
+### 专题系统
+
+| 系统名称 | 包含技能 | 状态 |
+|---------|---------|------|
+| 需求分析系统 | req-clarify, req-structure, doc-generator | ✅ 完成 |
 
 ### 计划中的技能
 
@@ -173,11 +183,20 @@ Auto-Skills 的愿景是打造一个开箱即用的 Claude Code 技能合集，�
 
 ## 更新日志
 
+### 2026-01-26
+
+- ✅ 完成需求分析系统（3 个技能）
+  - req-clarify: 需求澄清助手
+  - req-structure: 需求结构化
+  - doc-generator: 文档生成器
+- ✅ 完成需求分析专题文档（5 个文档）
+
 ### 2026-01-23
 
 - ✅ 初始化项目结构
 - ✅ 完成 file-ops 技能
 - ✅ 完成 git-helper 技能
+- ✅ 完成 task-clarify 技能
 - ✅ 创建技能模板
 - ✅ 完成基础文档
 
