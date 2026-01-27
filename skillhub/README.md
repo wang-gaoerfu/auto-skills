@@ -26,19 +26,19 @@ SkillHub 是一个 Web 应用，用于管理和使用 Auto-Skills 项目中的�
 ### Phase 2: Skills 管理 🚧
 - [x] Skills API Routes
 - [x] Skills 列表页面
-- [ ] Skills 详情页面
-- [ ] 创建/编辑技能
-- [ ] 删除技能
+- [x] Skills 详情页面
+- [x] 创建/编辑技能
+- [x] 删除技能
 
 ### Phase 3: MCP 管理
-- [ ] MCP 配置读取
-- [ ] MCP 配置编辑
-- [ ] MCP 服务器管理
+- [x] MCP 配置读取
+- [x] MCP 配置编辑
+- [x] MCP 服务器管理
 
 ### Phase 4: 工具集
-- [ ] 需求分析工具
-- [ ] 工作流编排
-- [ ] 架构设计工具
+- [x] 需求分析工具
+- [x] 工作流编排
+- [x] 架构设计工具
 
 ## 快速开始
 

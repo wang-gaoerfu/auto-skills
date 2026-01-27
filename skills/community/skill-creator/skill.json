@@ -1,0 +1,8 @@
+{
+  "name": "skill-creator",
+  "displayName": "Skill Creator",
+  "description": "Guide for creating effective skills. This skill provides guidance for creating skills that extend Claude's capabilities with specialized knowledge, workflows, or tool integrations.",
+  "version": "1.0.0",
+  "author": "Anthropic",
+  "category": "community"
+}

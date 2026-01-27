@@ -77,8 +77,6 @@ export async function executeWorkflowStep(
     throw new Error('Step not found')
   }
 
-  // 这里应该调用对应的技能
-  // 目前返回模拟结果
   return {
     step: stepId,
     result: `模拟的${step.name}结果`,
@@ -112,7 +110,6 @@ export async function executeWorkflow(
       onProgress(step.id, result)
     }
 
-    // 将当前步骤的输出作为下一步的输入
     currentInput = result
   }
 

@@ -28,7 +28,7 @@ export async function GET(
     }
 
     // 获取技能内容
-    const content = await getSkillContent(skill.name)
+    const content = await getSkillContent(skill.path)
 
     return NextResponse.json({ skill, content })
   } catch (error) {
