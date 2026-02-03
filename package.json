@@ -1,29 +1,12 @@
 {
-  "name": "auto-skills",
+  "name": "auto-skills-workspace",
+  "private": true,
   "version": "0.1.0",
-  "description": "Claude Code skills合集，开源共享的常用工具技能集合",
-  "keywords": [
-    "claude-code",
-    "skills",
-    "automation",
-    "productivity"
-  ],
-  "author": "Your Name <your.email@example.com>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-username/auto-skills.git"
-  },
-  "bugs": {
-    "url": "https://github.com/your-username/auto-skills/issues"
-  },
-  "homepage": "https://github.com/your-username/auto-skills#readme",
+  "description": "共享技能库和多项目工作空间",
   "scripts": {
-    "test": "echo \"Run your tests here\" && exit 0",
-    "validate": "node scripts/validate-skills.js"
+    "validate:skills": "node scripts/validate-skills.js",
+    "list:skills": "node scripts/list-skills.js"
   },
-  "dependencies": {
-    "@modelcontextprotocol/server-filesystem": "^2026.1.14"
-  },
+  "dependencies": {},
   "devDependencies": {}
 }

@@ -14,7 +14,7 @@
   // 3. 不要与内置命令冲突
   //
   // 示例：code-review, git-helper, file-ops
-  "name": "my-skill",
+  "name": "basic-skill",
 
   // ----------------------------------------
   // 技能显示名称（可选）
@@ -22,7 +22,7 @@
   // 用于在帮助信息中展示，可以使用空格
   //
   // 示例：Code Reviewer, Git Operations Helper
-  "displayName": "My First Skill",
+  "displayName": "Basic Skill Template",
 
   // ----------------------------------------
   // 技能描述（必需）
