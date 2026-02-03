@@ -1,19 +1,20 @@
 # Auto-Skills
 
-> Claude Code 技能合集 - 开源共享的常用工具技能集合
+> Claude Code 多项目工作空间 - 共享技能库和开发工具集
 
-一个精心整理的 Claude Code skills 合集，包含自编技能和精选的社区技能。目标是帮助开发者提高效率，同时为新手提供学习和贡献的起点。
+一个精心组织的 Claude Code 工作空间，提供共享技能库、开发工具和完整文档，支持多项目并行开发。
 
 ---
 
 ## 项目简介
 
-Auto-Skills 是一个面向 Claude Code 用户的开源技能库，提供：
+Auto-Skills 是一个面向 Claude Code 用户的工作空间，提供：
 
-- **自编技能** - 原创的实用技能，附带详细注释和学习文档
-- **社区技能** - 精选的优质社区技能整合
-- **技能模板** - 帮助新手快速创建自己的技能
+- **共享技能库** - 9+ 实用技能，所有项目可复用
+- **多项目支持** - 并行管理多个独立项目
+- **开发工具** - 技能验证、列表等管理脚本
 - **完整文档** - 从入门到进阶的学习资料
+- **Web 管理界面** - SkillHub 提供可视化的技能管理
 
 ### 当前包含的技能
 
@@ -25,7 +26,8 @@ Auto-Skills 是一个面向 Claude Code 用户的开源技能库，提供：
 | `/req-clarify` | 需求分析助手 - 通过对话收集软件需求 | ✅ 完成 |
 | `/req-structure` | 需求结构化 - 整理为标准文档格式 | ✅ 完成 |
 | `/doc-generator` | 文档生成器 - 生成 Markdown 需求文档 | ✅ 完成 |
-| `/search-helper` | 代码搜索助手 - 智能代码查找 | 计划中 |
+| `/skill-manager` | 技能管理助手 - 管理本地技能的增删改查 | ✅ 完成 |
+| `/skill-creator` | 技能创建工具 - 引导创建新技能 | ✅ 完成 |
 
 ### 专题系统
 
@@ -67,23 +69,94 @@ cd auto-skills
 /git-helper --status
 ```
 
+### 管理工具
+
+```bash
+# 列出所有技能
+npm run list:skills
+
+# 验证技能配置
+npm run validate:skills
+```
+
 ---
 
 ## 目录结构
 
 ```
-auto-skills/
-├── README.md           # 项目说明
-├── LICENSE             # MIT 开源协议
-├── CONTRIBUTING.md     # 贡献指南
-├── package.json        # npm 配置
-├── skills/             # skills 核心目录
-│   ├── builtin/        # 自编技能
-│   ├── community/      # 社区技能
-│   └── templates/      # 技能模板
-├── docs/               # 文档目录
-├── examples/           # 使用示例
-└── .claude/            # Claude 配置
+auto-skills/                      # 工作空间根目录
+├── README.md                     # 项目说明
+├── LICENSE                       # MIT 开源协议
+├── CONTRIBUTING.md               # 贡献指南
+├── package.json                  # 工作空间配置
+│
+├── skills/                       # 【共享】Claude Code 技能库
+│   ├── builtin/                  # 内置技能 (7个)
+│   │   ├── file-ops/            # 文件操作助手
+│   │   ├── git-helper/          # Git 操作助手
+│   │   ├── task-clarify/        # 任务澄清助手
+│   │   ├── req-clarify/         # 需求分析助手
+│   │   ├── req-structure/       # 需求结构化
+│   │   ├── doc-generator/       # 文档生成器
+│   │   └── skill-manager/       # 技能管理助手
+│   ├── community/                # 社区技能 (1个)
+│   │   └── skill-creator/       # 技能创建工具
+│   └── templates/                # 技能模板
+│       └── basic-skill/         # 基础技能模板
+│
+├── skillhub/                     # 【独立项目】SkillHub Web 应用
+│   └── (Next.js 技能管理界面)
+│
+├── scripts/                      # 【共享】管理脚本
+│   ├── validate-skills.js       # 验证技能配置
+│   └── list-skills.js           # 列出所有技能
+│
+├── docs/                         # 【共享】项目文档
+│   ├── 00-getting-started.md    # 快速开始指南
+│   ├── 01-skill-structure.md    # 技能结构详解
+│   ├── 02-develop-first-skill.md # 创建第一个技能
+│   ├── 03-advanced-topics.md    # 高级主题
+│   ├── 04-faq.md                # 常见问题
+│   ├── mcp-setup.md             # MCP 配置指南
+│   ├── prd.md                   # 产品需求文档
+│   ├── requirement-analysis/    # 需求分析专题文档
+│   └── plans/                   # 项目规划
+│
+├── knowledge/                    # 【共享】知识库
+│   └── *.pdf                    # 参考资料文件
+│
+├── examples/                     # 【共享】使用示例
+├── tests/                        # 【共享】测试目录
+├── data/                         # 【共享】数据文件
+├── requirements/                 # 【共享】需求文档
+│
+├── .claude/                      # Claude Code 配置
+│   ├── CLAUDE.md                # 项目上下文
+│   ├── mcp.json                 # MCP 服务器配置
+│   └── skills -> ../skills      # 技能符号链接
+│
+└── your-project/                 # 【新建项目】未来的项目目录
+```
+
+---
+
+## 创建新项目
+
+在工作空间中创建新项目：
+
+```bash
+# 1. 创建项目目录
+mkdir your-new-project
+cd your-new-project
+
+# 2. 初始化项目
+npm init -y
+
+# 3. 创建符号链接到共享技能
+mkdir .claude
+cd .claude
+# Windows: mklink /D skills ..\skills
+# Linux/Mac: ln -s ../skills skills
 ```
 
 ---
