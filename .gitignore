@@ -22,3 +22,7 @@ node_modules/
 .env.local
 .env.*.local
 nul
+
+# 知识库大文件
+knowledge/*.pdf
+knowledge/
