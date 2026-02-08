@@ -1,0 +1,81 @@
+{
+  "name": "yt-dlp",
+  "displayName": "Video Downloader (yt-dlp)",
+  "description": "视频下载助手，支持 YouTube、Bilibili、Twitter 等数百个网站的视频下载",
+  "version": "1.0.0",
+  "author": "Auto-Skills Team",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string",
+        "description": "视频 URL 地址"
+      },
+      "output": {
+        "type": "string",
+        "description": "输出目录或文件名模板，默认为当前目录"
+      },
+      "format": {
+        "type": "string",
+        "enum": ["best", "mp4", "mp3", "bestvideo+bestaudio", "worst"],
+        "description": "视频/音频格式：best=最佳质量, mp4=MP4格式, mp3=仅音频, bestvideo+bestaudio=最佳视频+音频, worst=最低质量",
+        "default": "best"
+      },
+      "quality": {
+        "type": "string",
+        "description": "视频质量，如 1080p, 720p, 480p 等"
+      },
+      "subtitle": {
+        "type": "boolean",
+        "description": "是否下载字幕",
+        "default": false
+      },
+      "subtitle-lang": {
+        "type": "string",
+        "description": "字幕语言，如 zh-Hans, en 等"
+      },
+      "thumbnail": {
+        "type": "boolean",
+        "description": "是否下载缩略图",
+        "default": false
+      },
+      "playlist": {
+        "type": "boolean",
+        "description": "是否下载整个播放列表",
+        "default": false
+      },
+      "playlist-start": {
+        "type": "number",
+        "description": "播放列表起始位置（从1开始）"
+      },
+      "playlist-end": {
+        "type": "number",
+        "description": "播放列表结束位置"
+      },
+      "proxy": {
+        "type": "string",
+        "description": "代理地址，如 socks5://127.0.0.1:1080"
+      },
+      "cookies": {
+        "type": "string",
+        "description": "Cookies 文件路径（用于访问需要登录的内容）"
+      },
+      "extract-only": {
+        "type": "boolean",
+        "description": "仅提取信息不下载",
+        "default": false
+      },
+      "verbose": {
+        "type": "boolean",
+        "description": "显示详细输出",
+        "default": false
+      },
+      "force": {
+        "type": "boolean",
+        "description": "强制覆盖已存在的文件",
+        "default": false
+      }
+    },
+    "required": ["url"]
+  }
+}
