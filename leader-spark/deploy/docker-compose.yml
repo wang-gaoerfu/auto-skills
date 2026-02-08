@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: leader-spark-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: leader_spark
+      POSTGRES_PASSWORD: your_secure_password_here
+      POSTGRES_DB: leader_spark
+      TZ: Asia/Shanghai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leader_spark"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - leader-spark-network
+
+  # Qdrant 向量数据库
+  qdrant:
+    image: qdrant/qdrant:v1.12.0
+    container_name: leader-spark-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"  # HTTP API
+      - "6334:6334"  # gRPC API
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      TZ: Asia/Shanghai
+    networks:
+      - leader-spark-network
+
+  # 后端 API
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: leader-spark-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../backend/.env.production
+    environment:
+      TZ: Asia/Shanghai
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    volumes:
+      - ../backend/uploads:/app/uploads
+    networks:
+      - leader-spark-network
+
+  # 前端
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: leader-spark-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      TZ: Asia/Shanghai
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - leader-spark-network
+
+volumes:
+  postgres_data:
+    driver: local
+  qdrant_data:
+    driver: local
+
+networks:
+  leader-spark-network:
+    driver: bridge

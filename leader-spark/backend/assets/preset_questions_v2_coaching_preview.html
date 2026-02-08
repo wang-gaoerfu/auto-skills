@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教练技术预设问题（100个）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .topic {
+            margin-bottom: 30px;
+        }
+
+        .topic-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .question-list {
+            list-style: none;
+        }
+
+        .question-item {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .question-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .question-id {
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .question-text {
+            color: #333;
+        }
+
+        .case-question {
+            border-left-color: #f093fb;
+        }
+
+        .case-question .question-id {
+            color: #f093fb;
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .stat-item {
+                margin: 10px 0;
+            }
+
+            .tab {
+                padding: 15px;
+                font-size: 1em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 教练技术预设问题</h1>
+            <p>基于《教练技术的53个顶级工具》知识库生成</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number">100</div>
+                <div class="stat-label">总问题数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50</div>
+                <div class="stat-label">理论知识</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50</div>
+                <div class="stat-label">实战案例</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('theory')">📚 理论知识</div>
+            <div class="tab" onclick="showTab('case')">💼 实战案例</div>
+        </div>
+
+        <div class="content">
+            <div id="theory-content">
+                <h2 class="section-title">理论知识（50问）</h2>
+
+                <div class="topic">
+                    <h3 class="topic-title">📘 教练技术基础</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T001</span>什么是教练技术？</li>
+                        <li class="question-item"><span class="question-id">T002</span>教练技术的核心理念是什么？</li>
+                        <li class="question-item"><span class="question-id">T003</span>教练和管理者有什么区别？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🌟 教练文化</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T004</span>什么是教练文化？如何塑造教练文化？</li>
+                        <li class="question-item"><span class="question-id">T005</span>教练文化对团队有什么作用？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🤝 教练受训关系</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T006</span>什么是教练受训关系？如何建立？</li>
+                        <li class="question-item"><span class="question-id">T007</span>教练在受训关系中扮演什么角色？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">📊 评估工具</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T008</span>什么是360度反馈评估？</li>
+                        <li class="question-item"><span class="question-id">T009</span>360度反馈评估的评分标准是什么？</li>
+                        <li class="question-item"><span class="question-id">T010</span>360度反馈评估包含哪些维度？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">💎 价值观工具</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T011</span>什么是价值观优先排序工具？</li>
+                        <li class="question-item"><span class="question-id">T012</span>价值观优先排序工具的作用是什么？</li>
+                        <li class="question-item"><span class="question-id">T013</span>如何使用价值观优先排序工具？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🧠 信念系统</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T014</span>什么是制约信念？</li>
+                        <li class="question-item"><span class="question-id">T015</span>什么是赋能信念？</li>
+                        <li class="question-item"><span class="question-id">T016</span>制约信念和赋能信念有什么区别？</li>
+                        <li class="question-item"><span class="question-id">T017</span>如何识别客户的制约信念？</li>
+                        <li class="question-item"><span class="question-id">T018</span>如何将制约信念转化为赋能信念？</li>
+                        <li class="question-item"><span class="question-id">T019</span>什么是自我信念？它的重要性是什么？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">💪 信心策略</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T020</span>什么是信心策略工具？</li>
+                        <li class="question-item"><span class="question-id">T021</span>信心策略工具如何提升个人表现？</li>
+                        <li class="question-item"><span class="question-id">T022</span>什么是个人空间工具？如何创建？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎯 能力发展</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T023</span>教练技术中的管理能力包括哪些方面？</li>
+                        <li class="question-item"><span class="question-id">T024</span>教练技术中的沟通能力包括哪些技巧？</li>
+                        <li class="question-item"><span class="question-id">T025</span>什么是积极倾听？在教练技术中如何应用？</li>
+                        <li class="question-item"><span class="question-id">T026</span>什么是有效提问技巧？</li>
+                        <li class="question-item"><span class="question-id">T031</span>教练如何给下属提供建立信心的反馈？</li>
+                        <li class="question-item"><span class="question-id">T032</span>如何为团队成员设定明确的目标？</li>
+                        <li class="question-item"><span class="question-id">T033</span>教练技术中如何管理情绪？</li>
+                        <li class="question-item"><span class="question-id">T034</span>如何应对他人的情绪反应？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">👥 团队建设</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T027</span>教练技术中的团队建设能力包括哪些？</li>
+                        <li class="question-item"><span class="question-id">T028</span>如何通过教练技术提升团队效率？</li>
+                        <li class="question-item"><span class="question-id">T029</span>如何鼓励团队成员间的合作与信任？</li>
+                        <li class="question-item"><span class="question-id">T030</span>如何处理团队成员之间的矛盾？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎤 访谈技巧</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T035</span>什么是行为事件访谈？</li>
+                        <li class="question-item"><span class="question-id">T036</span>行为事件访谈的目的是什么？</li>
+                        <li class="question-item"><span class="question-id">T037</span>如何进行行为事件访谈？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">📝 语言模式</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T038</span>什么是消极语言？如何识别？</li>
+                        <li class="question-item"><span class="question-id">T039</span>消极语言对客户有什么影响？</li>
+                        <li class="question-item"><span class="question-id">T040</span>如何帮助客户改变消极语言？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🔧 教练工具</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T041</span>教练技术中有哪些核心工具？</li>
+                        <li class="question-item"><span class="question-id">T042</span>如何选择合适的教练工具？</li>
+                        <li class="question-item"><span class="question-id">T043</span>教练工具的使用顺序有什么要求？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎨 形象化技巧</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T044</span>什么是形象化方法？在教练技术中如何应用？</li>
+                        <li class="question-item"><span class="question-id">T045</span>如何通过形象化方法提升客户信心？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">💬 反馈技巧</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T046</span>教练技术中的反馈技巧有哪些？</li>
+                        <li class="question-item"><span class="question-id">T047</span>如何给予有效的反馈？</li>
+                        <li class="question-item"><span class="question-id">T048</span>如何接收和利用他人的反馈？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎯 目标设定</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T049</span>教练技术中如何帮助客户设定目标？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🌐 应用领域</h3>
+                    <ul class="question-list">
+                        <li class="question-item"><span class="question-id">T050</span>教练技术的应用领域有哪些？</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="case-content" class="hidden">
+                <h2 class="section-title">实战案例（50问）</h2>
+
+                <div class="topic">
+                    <h3 class="topic-title">💪 信心策略</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C001</span>客户说'我想尝试提升管理能力，但总是失败'，作为教练应如何应对？</li>
+                        <li class="question-item case-question"><span class="question-id">C009</span>客户说'我害怕失败，所以不敢尝试新事物'，如何使用信心策略工具帮助他？</li>
+                        <li class="question-item case-question"><span class="question-id">C018</span>客户说'我觉得自己没有领导力'，教练如何通过形象化方法提升他的自信？</li>
+                        <li class="question-item case-question"><span class="question-id">C023</span>客户在公开演讲前紧张焦虑，教练如何使用信心策略工具帮助他克服？</li>
+                        <li class="question-item case-question"><span class="question-id">C035</span>客户在重要项目前失去信心，说'我不可能完成这个任务'，如何快速建立信心？</li>
+                        <li class="question-item case-question"><span class="question-id">C053</span>客户在公开场合发言时紧张，无法发挥正常水平，教练如何帮助？</li>
+                        <li class="question-item case-question"><span class="question-id">C070</span>客户在重要谈判前失去了信心，教练如何快速建立谈判信心？</li>
+                        <li class="question-item case-question"><span class="question-id">C081</span>客户在晋升答辩前感到紧张，教练如何使用形象化方法帮助他准备？</li>
+                        <li class="question-item case-question"><span class="question-id">C091</span>客户在重要演讲前失去了信心，教练如何快速建立演讲信心？</li>
+                        <li class="question-item case-question"><span class="question-id">C067</span>客户说'我总是担心失败，不敢行动'，如何使用信心策略工具帮助他？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">💎 价值观工具</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C002</span>客户在价值观排序时出现冲突，说'家庭和工作都很重要，不知道如何选择'，如何处理？</li>
+                        <li class="question-item case-question"><span class="question-id">C015</span>客户想要了解自己的核心价值观，但说不清楚，教练应如何引导？</li>
+                        <li class="question-item case-question"><span class="question-id">C016</span>管理者在重要决策时犹豫不决，教练如何使用价值观工具帮助他做出选择？</li>
+                        <li class="question-item case-question"><span class="question-id">C027</span>客户在价值观优先排序中，发现'金钱'和'成长'存在冲突，如何引导他做出选择？</li>
+                        <li class="question-item case-question"><span class="question-id">C041</span>客户在价值观排序后，发现与当前工作不匹配，如何帮助他做出职业选择？</li>
+                        <li class="question-item case-question"><span class="question-id">C050</span>客户说'我的工作没有意义'，如何通过价值观工具帮助他找到意义？</li>
+                        <li class="question-item case-question"><span class="question-id">C055</span>客户在决策时优柔寡断，教练如何使用价值观工具帮助他快速决策？</li>
+                        <li class="question-item case-question"><span class="question-id">C064</span>客户在职业转型期感到迷茫，教练如何使用价值观工具帮助他做出选择？</li>
+                        <li class="question-item case-question"><span class="question-id">C075</span>客户不知道如何平衡工作和生活，教练如何使用价值观工具帮助他？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">📊 360度评估</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C003</span>管理者收到360度反馈评估结果，发现团队认为自己缺乏沟通，如何通过教练技术改进？</li>
+                        <li class="question-item case-question"><span class="question-id">C012</span>客户在360度评估中得了低分，感到沮丧，教练如何帮助他面对和改进？</li>
+                        <li class="question-item case-question"><span class="question-id">C024</span>团队成员对360度评估有抵触心理，认为不公平，教练如何消除这种抵触？</li>
+                        <li class="question-item case-question"><span class="question-id">C046</span>客户在360度评估中"与客户合作能力"得分最低，如何改进？</li>
+                        <li class="question-item case-question"><span class="question-id">C068</span>HR部门希望在组织内实施360度评估，教练应如何设计实施方案？</li>
+                        <li class="question-item case-question"><span class="question-id">C086</span>客户在360度评估中"沟通能力"得分不高，如何改进？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🧠 信念系统</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C005</span>客户说'我不够优秀，无法胜任这个职位'，如何帮助他改变这个制约信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C020</span>客户在职业发展中遇到瓶颈，说'我无法突破自己的限制'，如何识别并突破制约信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C030</span>客户说'我总是把事情搞砸，我一无是处'，如何识别这种制约信念并转化为赋能信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C037</span>客户说'我总是不敢表达自己的真实想法'，如何帮助他克服这个制约信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C044</span>客户说'我没有能力做领导'，如何将这个制约信念转化为赋能信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C057</span>客户说'我不相信有人会真正支持我'，如何识别和改变这个制约信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C061</span>客户说'我不值得被重视'，如何将这个自我否定制约信念转化为赋能信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C072</span>客户说'我不擅长领导别人'，如何将这个制约信念转化为赋能信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C078</span>客户说'我永远无法达到那个水平'，如何识别和改变这个制约信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C083</span>客户说'我总是担心别人的看法'，如何帮助他克服这个制约？</li>
+                        <li class="question-item case-question"><span class="question-id">C088</span>客户说'我缺乏创新思维'，如何将这个制约信念转化为赋能信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C095</span>客户说'我不值得被表扬'，如何改变这个制约信念？</li>
+                        <li class="question-item case-question"><span class="question-id">C100</span>客户说'我永远无法成为优秀的领导者'，如何识别和改变这个制约信念？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">👥 团队建设</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C004</span>团队成员之间发生矛盾，作为团队教练如何介入处理？</li>
+                        <li class="question-item case-question"><span class="question-id">C008</span>团队士气低落，成员缺乏合作意识，教练如何通过工具提升团队凝聚力？</li>
+                        <li class="question-item case-question"><span class="question-id">C014</span>客户说'我的团队效率很低，不知道从哪里入手改善'，教练如何帮助他诊断问题？</li>
+                        <li class="question-item case-question"><span class="question-id">C021</span>新团队建立初期，如何通过教练技术快速建立信任关系？</li>
+                        <li class="question-item case-question"><span class="question-id">C031</span>跨部门协作中存在信任问题，教练如何使用工具促进部门间的信任建立？</li>
+                        <li class="question-item case-question"><span class="question-id">C033</span>团队成员之间互相抱怨，消极语言泛滥，教练如何改变这种氛围？</li>
+                        <li class="question-item case-question"><span class="question-id">C036</span>团队在完成一个大项目后士气低落，教练如何帮助团队恢复活力？</li>
+                        <li class="question-item case-question"><span class="question-id">C043</span>团队中存在"甩锅"文化，责任推诿严重，教练如何改变这种文化？</li>
+                        <li class="question-item case-question"><span class="question-id">C047</span>团队成员缺乏主动思考能力，总是等待指令，教练如何改变这种状态？</li>
+                        <li class="question-item case-question"><span class="question-id">C051</span>团队中存在"小团体"现象，影响了整体凝聚力，教练如何处理？</li>
+                        <li class="question-item case-question"><span class="question-id">C054</span>团队成员对反馈有抵触情绪，不愿意接受，教练如何改变这种态度？</li>
+                        <li class="question-item case-question"><span class="question-id">C056</span>管理者不知道如何激励团队成员，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C058</span>团队在压力下出现消极情绪蔓延，教练如何快速干预？</li>
+                        <li class="question-id">C062</span>团队成员缺乏责任感，总是找借口，教练如何培养责任文化？</li>
+                        <li class="question-item case-question"><span class="question-id">C065</span>团队在项目推进中遇到困难，士气低落，教练如何帮助团队重拾信心？</li>
+                        <li class="question-item case-question"><span class="question-id">C069</span>团队成员之间缺乏透明度，信息共享不足，教练如何改善？</li>
+                        <li class="question-item case-question"><span class="question-id">C073</span>团队在完成目标后缺乏庆祝机制，教练如何帮助团队建立庆祝文化？</li>
+                        <li class="question-item case-question"><span class="question-id">C076</span>团队成员之间缺乏信任，互相猜疑，教练如何重建信任？</li>
+                        <li class="question-item case-question"><span class="question-id">C079</span>团队在远程办公时凝聚力下降，教练如何维持团队协作？</li>
+                        <li class="question-item case-question"><span class="question-id">C085</span>团队在项目后期出现疲惫感，执行力下降，教练如何帮助团队保持动力？</li>
+                        <li class="question-item case-question"><span class="question-id">C089</span>团队成员之间缺乏有效协作，各自为战，教练如何改善？</li>
+                        <li class="question-item case-question"><span class="question-id">C093</span>团队成员缺乏归属感，流失率高，教练如何提升团队凝聚力？</li>
+                        <li class="question-item case-question"><span class="question-id">C096</span>团队在压力下出现负面情绪，教练如何快速干预？</li>
+                        <li class="question-item case-question"><span class="question-id">C099</span>团队成员之间缺乏有效反馈，教练如何建立反馈机制？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">💬 沟通能力</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C017</span>团队成员抱怨管理者不听取意见，教练如何帮助管理者改善倾听能力？</li>
+                        <li class="question-item case-question"><span class="question-id">C028</span>团队成员之间缺乏有效沟通，会议效率低下，教练如何改善沟通模式？</li>
+                        <li class="question-item case-question"><span class="question-id">C038</span>管理者在会议中经常打断他人发言，教练如何帮助他改善这种行为？</li>
+                        <li class="question-item case-question"><span class="question-id">C039</span>客户不知道如何与上级进行有效沟通，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C060</span>管理者在跨文化团队中遇到沟通障碍，教练如何帮助他适应？</li>
+                        <li class="question-item case-question"><span class="question-id">C066</span>管理者在与员工沟通时经常打断对方，教练如何帮助他改善倾听习惯？</li>
+                        <li class="question-item case-question"><span class="question-id">C094</span>管理者在与上级沟通时缺乏自信，教练如何帮助他？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">😊 情绪管理</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C007</span>客户在会议中总是情绪激动，影响沟通，教练如何帮助他管理情绪？</li>
+                        <li class="question-item case-question"><span class="question-id">C029</span>管理者收到下属的负面反馈，情绪激动，教练如何帮助他正确处理？</li>
+                        <li class="question-item case-question"><span class="question-id">C042</span>管理者缺乏同理心，无法理解下属的感受，教练如何帮助他发展同理心？</li>
+                        <li class="question-item case-question"><span class="question-id">C074</span>管理者在危机处理时情绪失控，影响了团队稳定，教练如何帮助？</li>
+                        <li class="question-item case-question"><span class="question-id">C083</span>客户说'我总是担心别人的看法'，如何帮助他克服这个制约？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎤 访谈技巧</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C010</span>HR想了解高绩效管理者的关键行为，如何使用行为事件访谈法进行调研？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">📝 反馈技巧</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C011</span>管理者不知道如何给下属提供建设性反馈，教练应如何培训？</li>
+                        <li class="question-item case-question"><span class="question-id">C049</span>管理者在绩效面谈中不知如何与下属讨论不足之处，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C077</span>管理者不知道如何给予负面反馈，总是避免，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C099</span>团队成员之间缺乏有效反馈，教练如何建立反馈机制？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎯 目标设定</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C006</span>新晋管理者不知道如何给团队设定目标，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C040</span>团队成员对目标缺乏认同感，执行力度不够，教练如何解决？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">📚 语言模式</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C013</span>团队中存在消极语言，影响了整体氛围，教练如何识别并改变这种语言模式？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎨 形象化技巧</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C048</span>客户在重要谈判前焦虑不安，教练如何使用形象化方法帮助他准备？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎯 管理能力</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C022</span>管理者总是亲力亲为，不懂得授权，教练如何帮助他改变这种行为模式？</li>
+                        <li class="question-item case-question"><span class="question-id">C025</span>客户说'我不知道我的团队期望我做什么'，教练如何帮助他明确角色定位？</li>
+                        <li class="question-item case-question"><span class="question-id">C045</span>新团队领导者不知道如何建立威信，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C052</span>管理者总是追求完美，导致团队压力过大，教练如何帮助他调整？</li>
+                        <li class="question-item case-question"><span class="question-id">C063</span>管理者不知道如何进行有效的时间管理，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C080</span>管理者在决策时过于理性，忽视了情感因素，教练如何帮助他平衡？</li>
+                        <li class="question-item case-question"><span class="question-id">C087</span>管理者总是避免冲突，导致问题积累，教练如何帮助他学会应对冲突？</li>
+                        <li class="question-item case-question"><span class="question-id">C090</span>管理者不知道如何进行有效的会议管理，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C097</span>管理者不知道如何进行有效的时间分配，教练应如何指导？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🌟 领导力</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C032</span>客户想要提升自己的领导力，但不知道从哪些方面入手，教练如何引导？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🚀 变革管理</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C019</span>团队面临变革，成员抵触情绪强烈，教练如何帮助管理者应对变革管理？</li>
+                        <li class="question-item case-question"><span class="question-id">C082</span>团队成员对变革有抵触情绪，教练如何帮助管理者推动变革？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🌐 教练文化</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C026</span>HR部门希望在组织内推广教练文化，教练应如何设计推广方案？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🏢 教练机制</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C092</span>HR部门希望在组织内建立教练机制，教练应如何设计实施路径？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">🎯 角色定位</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C025</span>客户说'我不知道我的团队期望我做什么'，教练如何帮助他明确角色定位？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">👤 人才发展</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C034</span>管理者不知道如何识别和培养高潜人才，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C071</span>管理者不知道如何识别团队中的高潜人才，教练应如何指导？</li>
+                        <li class="question-item case-question"><span class="question-id">C084</span>管理者不知道如何培养下属的主动性，教练应如何指导？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">💼 职业发展</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C059</span>客户想要建立个人品牌，但不知道如何定位，教练如何帮助？</li>
+                        <li class="question-item case-question"><span class="question-id">C098</span>客户在职业发展中遇到瓶颈，如何使用价值观工具找到突破点？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">⚖️ 工作生活平衡</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C075</span>客户不知道如何平衡工作和生活，教练如何使用价值观工具帮助他？</li>
+                    </ul>
+                </div>
+
+                <div class="topic">
+                    <h3 class="topic-title">👤 个人发展</h3>
+                    <ul class="question-list">
+                        <li class="question-item case-question"><span class="question-id">C059</span>客户想要建立个人品牌，但不知道如何定位，教练如何帮助？</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📚 基于知识库生成 | 🤖 教练技术智能客服</p>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // 隐藏所有内容
+            document.getElementById('theory-content').classList.add('hidden');
+            document.getElementById('case-content').classList.add('hidden');
+
+            // 移除所有标签的active类
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // 显示选中的内容
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+
+            // 添加active类到选中的标签
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
