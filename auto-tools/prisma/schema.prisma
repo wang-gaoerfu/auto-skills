@@ -1,0 +1,147 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 用户模型 ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String?   @unique
+  password      String    // bcrypt 加密
+  name          String?
+  avatar        String?
+  role          String    @default("USER")    // USER, ADMIN
+  isActive      Boolean   @default(true)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // 关联
+  membership    Membership?
+  toolUsage     ToolUsage[]
+  sessions      Session[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+// ==================== 会话模型 ====================
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+}
+
+// ==================== 会员模型 ====================
+
+model Membership {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  plan          String   @default("FREE")    // FREE, BASIC, PRO, ENTERPRISE
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, EXPIRED
+  expiresAt     DateTime?
+  appliedAt     DateTime @default(now())
+  approvedAt    DateTime?                  // 管理员 ID
+  approvedBy    String?
+  rejectedAt    DateTime?
+  rejectReason  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ==================== 工具分类模型 ====================
+
+model ToolCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  icon        String?
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tools Tool[]
+
+  @@index([slug])
+}
+
+// ==================== 工具模型 ====================
+
+model Tool {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String
+  icon        String?
+  categoryId  String
+  isFree      Boolean     @default(false) // 是否免费
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  useCount    Int         @default(0) // 使用次数
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // 工具配置（JSON 存储动态表单、参数等）
+  config      String?     // JSON 字符串
+
+  category    ToolCategory @relation(fields: [categoryId], references: [id])
+
+  // 使用记录
+  usage       ToolUsage[]
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+// ==================== 工具使用记录 ====================
+
+model ToolUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  toolId    String
+  input     String?  // JSON 存储输入参数
+  output    String?  // JSON 存储输出结果
+  duration  Int?     // 执行时长（毫秒）
+  success   Boolean  @default(true)
+  error     String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool Tool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([toolId])
+  @@index([createdAt])
+}
+
+// ==================== 系统设置 ====================
+
+model SystemSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   // JSON 字符串
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
