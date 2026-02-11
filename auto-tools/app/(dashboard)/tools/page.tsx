@@ -76,31 +76,46 @@ export default function ToolsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="space-y-4">
         {/* Search */}
-        <div className="flex-1">
+        <div>
           <input
             type="text"
             placeholder="搜索工具..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
         </div>
 
-        {/* Category filter */}
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
-        >
-          <option value="">全部分类</option>
+        {/* Category tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            onClick={() => setSelectedCategory('')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              selectedCategory === ''
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700'
+            }`}
+          >
+            <span>📦</span>
+            <span>全部</span>
+          </button>
           {categories.map((cat) => (
-            <option key={cat.id} value={cat.slug}>
-              {cat.icon} {cat.name}
-            </option>
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.slug)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                selectedCategory === cat.slug
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700'
+              }`}
+            >
+              <span>{cat.icon || '📁'}</span>
+              <span>{cat.name}</span>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       {/* Tools grid */}

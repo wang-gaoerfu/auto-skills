@@ -1,0 +1,294 @@
+// 提取抖音短链接
+ /// <summary>
+ /// 从用户输入文本中提取抖音短链接
+ /// </summary>
+ /// <param name="input">用户输入文本</param>
+ /// <returns>提取到的抖音短链接，如果没有找到则返回空字符串</returns>
+ public static string ExtractDouyinShortUrl(string input)
+ {
+     // 匹配抖音短链接的正则表达式
+     string pattern = @"https://v\.douyin\.com/[\w\-_]+/";
+     Regex regex = new Regex(pattern);
+     
+     Match match = regex.Match(input);
+     if (match.Success)
+     {
+         return match.Value.Trim('`'); // 去除可能的反引号
+     }
+     
+     return string.Empty;
+ }
+
+
+
+// 解析短链接，获取真实视频URL
+
+/// <summary>
+/// 解析抖音短链接，获取真实视频URL
+/// </summary>
+/// <param name="shortUrl">抖音短链接</param>
+/// <returns>真实视频URL，如果解析失败则返回空字符串</returns>
+public static string ResolveDouyinShortUrl(string shortUrl)
+{
+    if (string.IsNullOrEmpty(shortUrl))
+    {
+        return string.Empty;
+    }
+    
+    // 创建ChromeDriver选项
+    ChromeOptions options = new ChromeOptions();
+    options.AddArgument("--headless"); // 无头模式，不显示浏览器窗口
+    options.AddArgument("--disable-gpu");
+    options.AddArgument("--no-sandbox");
+    
+    using (IWebDriver driver = new ChromeDriver(options))
+    {
+        try
+        {
+            // 设置页面加载超时
+            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(10);
+            
+            // 打开短链接
+            driver.Navigate().GoToUrl(shortUrl);
+            
+            // 获取当前页面的URL（应该是重定向后的真实URL）
+            string realUrl = driver.Url;
+            
+            return realUrl;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"解析短链接时出错: {ex.Message}");
+            return string.Empty;
+        }
+    }
+}
+
+ /// <summary>
+ /// 模拟手机浏览器获取网页HTML内容
+ /// </summary>
+ /// <param name="url">手机端URL</param>
+ /// <param name="videoUrl">输出参数，用于返回直接从DOM中获取的视频地址</param>
+ /// <returns>网页HTML内容，如果获取失败则返回空字符串</returns>
+ public static string GetMobileHtmlContent(string url, out string videoUrl)
+ {
+     videoUrl = string.Empty;
+     
+     if (string.IsNullOrEmpty(url))
+     {
+         return string.Empty;
+     }
+     
+     int maxRetries = 3;
+     int retryCount = 0;
+     
+     while (retryCount < maxRetries)
+     {
+         try
+         {
+             retryCount++;
+             Console.WriteLine($"正在尝试获取HTML内容 (第 {retryCount}/{maxRetries} 次)...");
+             
+             // 创建ChromeDriver选项，配置为模拟手机浏览器
+             ChromeOptions options = new ChromeOptions();
+             
+             // 模拟iPhone X
+             options.EnableMobileEmulation("iPhone X");
+             
+             // 添加优化选项以提高性能和稳定性
+             options.AddArgument("--headless");
+             options.AddArgument("--disable-gpu");
+             options.AddArgument("--no-sandbox");
+             options.AddArgument("--disable-dev-shm-usage"); // 解决内存问题
+             options.AddArgument("--disable-extensions");
+             options.AddArgument("--disable-background-networking");
+             options.AddArgument("--disable-background-timer-throttling");
+             options.AddArgument("--disable-backgrounding-occluded-windows");
+             options.AddArgument("--disable-renderer-backgrounding");
+             options.AddArgument("--start-maximized");
+             
+             // 设置ChromeDriver服务选项
+             ChromeDriverService service = ChromeDriverService.CreateDefaultService();
+             service.HideCommandPromptWindow = true;
+             
+             using (IWebDriver driver = new ChromeDriver(service, options))
+             {
+                 try
+                 {
+                     // 设置超时时间
+                     driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30); // 增加页面加载超时
+                     driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+                     
+                     // 打开手机端URL
+                     driver.Navigate().GoToUrl(url);
+                     
+                     // 等待页面加载完成
+                     System.Threading.Thread.Sleep(3000);
+                     
+                     // 尝试直接从DOM中获取video标签的src属性
+                     try
+                     {
+                         IWebElement videoElement = driver.FindElement(By.Id("video-player"));
+                         if (videoElement != null)
+                             {
+                                 videoUrl = videoElement.GetAttribute("src");
+                                 if (!string.IsNullOrEmpty(videoUrl))
+                                 {
+                                     // 将带水印的视频地址(playwm)替换为不带水印的(play)
+                                     if (videoUrl.Contains("playwm"))
+                                     {
+                                         videoUrl = videoUrl.Replace("playwm", "play");
+                                     }
+                                     // 检查URL格式，如果是aweme/v1/play/格式，尝试添加必要的参数
+                                     if (videoUrl.Contains("aweme/v1/play/"))
+                                     {
+                                         // 确保URL包含必要的参数
+                                         if (!videoUrl.Contains("&is_play_url=1"))
+                                         {
+                                             videoUrl += (videoUrl.Contains("?") ? "&" : "?") + "is_play_url=1";
+                                         }
+                                         // 检查是否需要调整URL结构
+                                         if (videoUrl.Contains("m.douyin.com/aweme/v1/play/"))
+                                         {
+                                             // 尝试使用新的API格式
+                                             videoUrl = videoUrl.Replace("m.douyin.com/aweme/v1/play/", "aweme.snssdk.com/aweme/v1/play/");
+                                         }
+                                     }
+                                     Console.WriteLine($"直接从DOM获取到视频地址: {videoUrl}");
+                                 }
+                             }
+                     }
+                     catch (Exception ex)
+                     {
+                         Console.WriteLine($"直接获取video标签时出错: {ex.Message}");
+                     }
+                     
+                     // 获取网页HTML内容
+                     string htmlContent = driver.PageSource;
+                     
+                     // 验证HTML内容是否有效
+                     if (!string.IsNullOrEmpty(htmlContent) && htmlContent.Length > 100)
+                     {
+                         Console.WriteLine($"成功获取HTML内容 (第 {retryCount} 次尝试)");
+                         return htmlContent;
+                     }
+                     else
+                     {
+                         Console.WriteLine($"获取到的HTML内容不完整，将重试...");
+                     }
+                 }
+                 catch (WebDriverTimeoutException ex)
+                 {
+                     Console.WriteLine($"获取HTML内容超时 (第 {retryCount} 次尝试): {ex.Message}");
+                 }
+                 catch (Exception ex)
+                 {
+                     Console.WriteLine($"获取HTML内容时出错 (第 {retryCount} 次尝试): {ex.Message}");
+                 }
+             }
+         }
+         catch (Exception ex)
+         {
+             Console.WriteLine($"ChromeDriver初始化失败 (第 {retryCount} 次尝试): {ex.Message}");
+         }
+         
+         // 等待一段时间后重试
+         if (retryCount < maxRetries)
+         {
+             Console.WriteLine("等待3秒后重试...");
+             System.Threading.Thread.Sleep(3000);
+         }
+     }
+     
+     Console.WriteLine($"已尝试 {maxRetries} 次，仍然无法获取HTML内容");
+     return string.Empty;
+ }
+ 
+ /// <summary>
+ /// 从抖音网页HTML中提取视频地址
+ /// </summary>
+ /// <param name="htmlContent">抖音网页HTML内容</param>
+ /// <returns>提取到的视频地址，如果没有找到则返回空字符串</returns>
+ public static string ExtractVideoUrlFromHtml(string htmlContent)
+ {
+     if (string.IsNullOrEmpty(htmlContent))
+     {
+         return string.Empty;
+     }
+     
+     try
+     {
+         // 尝试匹配各种可能的视频URL格式
+         string[] patterns = {
+             // 匹配video标签中的src属性
+             @"<video[^>]*?id=[""']video-player[""'][^>]*?src=[""']([^""']*?)[""']",
+             // 匹配以http开头，包含playwm或play的视频URL
+             @"(https?://[^\s""']*\.(mp4|flv)[^\s""']*)",
+             // 匹配__PLAYERS__中的视频URL
+             @"__PLAYERS__[^}]*?video[^}]*?url[^""']*?[""']([^""']*?)[""']",
+             // 匹配srcUrl或playAddr
+             @"(?:srcUrl|playAddr)[^""']*?[""']([^""']*?)[""']",
+             // 匹配videoList中的视频URL
+             @"videoList[^\]]*?url[^""']*?[""']([^""']*?)[""']"
+         };
+         
+         foreach (string pattern in patterns)
+         {
+             Regex regex = new Regex(pattern);
+             MatchCollection matches = regex.Matches(htmlContent);
+             
+             foreach (Match match in matches)
+             {
+                 string videoUrl;
+                 // 如果是第一个捕获组存在，则使用第一个捕获组，否则使用整个匹配
+                 if (match.Groups.Count > 1 && !string.IsNullOrEmpty(match.Groups[1].Value))
+                 {
+                     videoUrl = match.Groups[1].Value;
+                 }
+                 else
+                 {
+                     videoUrl = match.Value;
+                 }
+                 
+                 if (!string.IsNullOrEmpty(videoUrl))
+                 {
+                     // 如果URL不完整，添加http:
+                     if (videoUrl.StartsWith("//"))
+                     {
+                         videoUrl = "http:" + videoUrl;
+                     }
+                     // 解码URL中的转义字符
+                     videoUrl = System.Uri.UnescapeDataString(videoUrl);
+                     // 将带水印的视频地址(playwm)替换为不带水印的(play)
+                     if (videoUrl.Contains("playwm"))
+                     {
+                         videoUrl = videoUrl.Replace("playwm", "play");
+                     }
+                     // 检查URL格式，如果是aweme/v1/play/格式，尝试添加必要的参数
+                     if (videoUrl.Contains("aweme/v1/play/"))
+                     {
+                         // 确保URL包含必要的参数
+                         if (!videoUrl.Contains("&is_play_url=1"))
+                         {
+                             videoUrl += (videoUrl.Contains("?") ? "&" : "?") + "is_play_url=1";
+                         }
+                         // 检查是否需要调整URL结构
+                         if (videoUrl.Contains("m.douyin.com/aweme/v1/play/"))
+                         {
+                             // 尝试使用新的API格式
+                             videoUrl = videoUrl.Replace("m.douyin.com/aweme/v1/play/", "aweme.snssdk.com/aweme/v1/play/");
+                         }
+                     }
+                     return videoUrl;
+                 }
+             }
+         }
+         
+         return string.Empty;
+     }
+     catch (Exception ex)
+     {
+         Console.WriteLine($"提取视频地址时出错: {ex.Message}");
+         return string.Empty;
+     }
+ }

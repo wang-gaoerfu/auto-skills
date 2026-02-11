@@ -86,8 +86,9 @@ async function main() {
   const dataCategory = await prisma.toolCategory.findUnique({ where: { slug: 'data-conversion' } })
   const devCategory = await prisma.toolCategory.findUnique({ where: { slug: 'dev-tools' } })
   const datetimeCategory = await prisma.toolCategory.findUnique({ where: { slug: 'datetime-tools' } })
+  const networkCategory = await prisma.toolCategory.findUnique({ where: { slug: 'network-tools' } })
 
-  if (!textCategory || !dataCategory || !devCategory || !datetimeCategory) {
+  if (!textCategory || !dataCategory || !devCategory || !datetimeCategory || !networkCategory) {
     console.log('警告: 部分分类未找到，跳过工具创建')
   } else {
     // 创建文本处理工具
@@ -170,6 +171,25 @@ async function main() {
       })
     }
     console.log(`创建 ${datetimeTools.length} 个时间日期工具`)
+  }
+
+  // 创建网络工具
+  if (networkCategory) {
+    const networkTools = [
+      { name: '抖音视频下载', slug: 'douyin-video-downloader', description: '根据抖音视频链接下载无水印视频', icon: '📱', isFree: true, sortOrder: 1 },
+    ]
+
+    for (const tool of networkTools) {
+      await prisma.tool.upsert({
+        where: { slug: tool.slug },
+        update: {},
+        create: {
+          ...tool,
+          categoryId: networkCategory.id,
+        },
+      })
+    }
+    console.log(`创建 ${networkTools.length} 个网络工具`)
   }
 
   console.log('数据库初始化完成!')
