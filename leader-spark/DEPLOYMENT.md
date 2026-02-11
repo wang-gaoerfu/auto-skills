@@ -1,21 +1,23 @@
 # Leader-Spark 部署指南
 
-> **版本**: v2.0
+> **版本**: v2.1
 > **更新时间**: 2025-02-08
-> **适用环境**: Linux Ubuntu 20.04+ / Debian 11+
+> **适用环境**: Linux Ubuntu 20.04+ / Debian 11+ / CentOS 8+
 
 ---
 
 ## 目录
 
 - [一、部署前准备](#一部署前准备)
-- [二、开发环境快速部署](#二开发环境快速部署)
-- [三、生产环境部署](#三生产环境部署)
-- [四、Nginx 反向代理配置](#四nginx-反向代理配置)
-- [五、SSL 证书配置](#五ssl-证书配置)
-- [六、监控和维护](#六监控和维护)
-- [七、故障排查](#七故障排查)
-- [八、安全建议](#八安全建议)
+- [二、系统软件安装](#二系统软件安装)
+- [三、开发环境快速部署](#三开发环境快速部署)
+- [四、生产环境部署](#四生产环境部署)
+- [五、Nginx 反向代理配置](#五nginx-反向代理配置)
+- [六、SSL 证书配置](#六ssl-证书配置)
+- [七、监控和维护](#七监控和维护)
+- [八、故障排查](#八故障排查)
+- [九、安全建议](#九安全建议)
+- [十、快速部署脚本](#十快速部署脚本)
 
 ---
 
@@ -29,7 +31,7 @@
 | CPU | 2 核 | 4 核+ |
 | 内存 | 4GB | 8GB+ |
 | 磁盘 | 20GB 可用空间 | 50GB+ SSD |
-| 操作系统 | Ubuntu 20.04+ / Debian 11+ | Ubuntu 22.04 LTS |
+| 操作系统 | Ubuntu 20.04+ / Debian 11+ / CentOS 8+ | Ubuntu 22.04 LTS |
 
 #### 网络端口
 | 端口 | 用途 |
@@ -56,71 +58,221 @@
 
 ---
 
-## 二、开发环境快速部署
+## 二、系统软件安装
 
-适用于本地开发和测试。
+在开始部署前，需要先安装一些基础软件。
 
-### 2.1 安装 Docker
-
-#### Ubuntu/Debian
+### 2.1 更新系统包
 
 ```bash
-# 1. 更新包索引
-sudo apt-get update
+# Ubuntu/Debian
+sudo apt update
+sudo apt upgrade -y
 
-# 2. 安装依赖
-sudo apt-get install -y \
+# CentOS/RHEL
+sudo yum update -y
+```
+
+### 2.2 安装基础工具
+
+```bash
+# Ubuntu/Debian
+sudo apt install -y \
+    curl \
+    wget \
+    git \
+    vim \
+    nano \
+    unzip \
+    htop \
+    net-tools \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    software-properties-common
+
+# CentOS/RHEL
+sudo yum install -y \
+    curl \
+    wget \
+    git \
+    vim \
+    unzip \
+    htop \
+    net-tools \
+    ca-certificates
+```
+
+### 2.3 安装 Node.js 和 npm/pnpm
+
+```bash
+# 安装 Node.js 20.x（使用 NodeSource 仓库）
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 验证安装
+node --version
+npm --version
+
+# 安装 pnpm（推荐，比 npm 更快）
+npm install -g pnpm
+
+# 验证安装
+pnpm --version
+```
+
+### 2.4 安装 Python 3 和 pip
+
+```bash
+# Ubuntu/Debian 通常已预装 Python 3
+sudo apt install -y python3 python3-pip python3-venv
+
+# 验证安装
+python3 --version
+pip3 --version
+```
+
+### 2.5 安装 Git（如果未安装）
+
+```bash
+# Ubuntu/Debian
+sudo apt install -y git
+
+# CentOS/RHEL
+sudo yum install -y git
+
+# 配置 Git（可选）
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+# 验证安装
+git --version
+```
+
+### 2.6 安装 Docker
+
+Docker 是本项目的核心运行环境，必须正确安装。
+
+#### 2.6.1 自动安装脚本（推荐）
+
+这是最简单的安装方法，适用于大多数 Linux 发行版：
+
+```bash
+# 下载并执行 Docker 官方安装脚本
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# 启动 Docker 服务
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 验证安装
+docker --version
+
+# 测试运行（可选）
+sudo docker run hello-world
+
+# 清理安装脚本
+rm get-docker.sh
+```
+
+#### 2.6.2 手动安装 Docker（Ubuntu/Debian）
+
+如果自动脚本失败，可以使用手动安装方式：
+
+```bash
+# 1. 卸载旧版本（如果有）
+sudo apt remove -y docker docker-engine docker.io containerd runc
+
+# 2. 更新包索引
+sudo apt update
+
+# 3. 安装必要的依赖包
+sudo apt install -y \
+    apt-transport-https \
     ca-certificates \
     curl \
     gnupg \
     lsb-release
 
-# 3. 添加 Docker 官方 GPG 密钥
+# 4. 添加 Docker 官方 GPG 密钥
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-# 4. 设置 Docker 仓库
+# 5. 设置 Docker 仓库
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# 5. 安装 Docker
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+# 6. 更新包索引
+sudo apt update
 
-# 6. 启动 Docker
+# 7. 安装 Docker Engine
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 8. 启动 Docker
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# 7. 验证安装
+# 9. 验证安装
 docker --version
+docker compose version
 ```
 
-#### CentOS/RHEL
+#### 2.6.3 手动安装 Docker（CentOS/RHEL 8/9）
 
 ```bash
-# 1. 安装依赖
-sudo yum install -y yum-utils
+# 1. 卸载旧版本（如果有）
+sudo yum remove -y docker docker-client docker-client-latest docker-common \
+    docker-latest docker-latest-logrotate docker-logrotate docker-engine
 
-# 2. 添加 Docker 仓库
+# 2. 安装必要的依赖
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+
+# 3. 添加 Docker 仓库
 sudo yum-config-manager --add-repo \
     https://download.docker.com/linux/centos/docker-ce.repo
 
-# 3. 安装 Docker
-sudo yum install -y docker-ce docker-ce-cli containerd.io
+# 4. 安装 Docker
+sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# 4. 启动 Docker
+# 5. 启动 Docker
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# 5. 验证安装
+# 6. 验证安装
 docker --version
+docker compose version
 ```
 
-### 2.2 安装 Docker Compose
+#### 2.6.4 配置 Docker 用户组（推荐）
+
+避免每次使用 Docker 都需要 sudo：
 
 ```bash
-# 下载最新版本的 Docker Compose
+# 1. 创建 docker 组（通常已存在）
+sudo groupadd docker
+
+# 2. 将当前用户添加到 docker 组
+sudo usermod -aG docker $USER
+
+# 3. 刷新用户组（需要重新登录或执行）
+newgrp docker
+
+# 4. 验证（不需要 sudo）
+docker run hello-world
+```
+
+> **注意**: 如果上面的命令不生效，请退出 SSH 重新登录。
+
+### 2.7 安装 Docker Compose
+
+Docker Compose V2 已包含在 Docker 插件中（使用 `docker compose` 命令）。
+
+如果需要使用独立的 Docker Compose V1：
+
+```bash
+# 下载最新版本的 Docker Compose V1
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
 # 添加执行权限
@@ -133,15 +285,50 @@ docker-compose --version
 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 ```
 
-### 2.3 配置防火墙
+### 2.8 安装 Nginx（生产环境需要）
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install -y nginx
+
+# CentOS/RHEL
+sudo yum install -y nginx
+
+# 启动 Nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# 验证安装
+nginx -v
+
+# 测试访问（浏览器打开服务器 IP）
+# 或使用 curl 测试
+curl http://localhost
+```
+
+### 2.9 安装 Certbot（SSL 证书）
+
+```bash
+# Ubuntu/Debian
+sudo apt install -y certbot python3-certbot-nginx
+
+# CentOS/RHEL
+sudo yum install -y certbot python3-certbot-nginx
+
+# 验证安装
+certbot --version
+```
+
+### 2.10 配置防火墙
 
 ```bash
 # 如果使用 ufw（Ubuntu 默认防火墙）
 sudo ufw allow 22/tcp    # SSH
 sudo ufw allow 80/tcp    # HTTP
 sudo ufw allow 443/tcp   # HTTPS
-sudo ufw allow 3000/tcp  # 前端（开发）
-sudo ufw allow 8000/tcp  # 后端 API（开发）
+sudo ufw allow 3000/tcp  # 前端（开发环境）
+sudo ufw allow 8000/tcp  # 后端 API（开发环境）
 
 # 启用防火墙
 sudo ufw enable
@@ -150,10 +337,24 @@ sudo ufw enable
 sudo ufw status
 ```
 
-### 2.4 启动数据库服务
+---
+
+## 三、开发环境快速部署
+
+适用于本地开发和测试。
+
+### 3.1 获取代码
 
 ```bash
-cd leader-spark/deploy
+# 克隆代码
+git clone https://github.com/your-username/leader-spark.git
+cd leader-spark
+```
+
+### 3.2 启动数据库服务
+
+```bash
+cd deploy
 
 # 仅启动数据库和向量数据库
 docker-compose up -d postgres qdrant
@@ -167,10 +368,10 @@ docker-compose logs -f postgres
 
 等待服务启动完成（约 10-20 秒）。
 
-### 2.5 配置后端环境变量
+### 3.3 配置后端环境变量
 
 ```bash
-cd leader-spark/backend
+cd ../backend
 
 # 复制环境变量模板
 cp .env.example .env
@@ -202,10 +403,10 @@ openssl rand -hex 32
 openssl rand -hex 32
 ```
 
-### 2.6 安装 Python 依赖
+### 3.4 安装 Python 依赖
 
 ```bash
-cd leader-spark/backend
+cd backend
 
 # 创建虚拟环境
 python3 -m venv venv
@@ -220,10 +421,10 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2.7 初始化数据库
+### 3.5 初始化数据库
 
 ```bash
-cd leader-spark/deploy
+cd deploy
 
 # 检查数据库是否已初始化
 docker exec leader-spark-postgres psql -U leader_spark -d leader_spark -c "\dt"
@@ -232,10 +433,10 @@ docker exec leader-spark-postgres psql -U leader_spark -d leader_spark -c "\dt"
 docker exec leader-spark-postgres psql -U leader_spark -d leader_spark -f /docker-entrypoint-initdb.d/init-db.sql
 ```
 
-### 2.8 启动后端服务
+### 3.6 启动后端服务
 
 ```bash
-cd leader-spark/backend
+cd backend
 
 # 激活虚拟环境（如果未激活）
 source venv/bin/activate
@@ -248,10 +449,10 @@ python app.py
 # API 文档：http://localhost:8000/docs
 ```
 
-### 2.9 安装前端依赖
+### 3.7 安装前端依赖
 
 ```bash
-cd leader-spark/frontend
+cd frontend
 
 # 使用 pnpm 安装依赖（推荐）
 pnpm install
@@ -260,10 +461,10 @@ pnpm install
 npm install
 ```
 
-### 2.10 配置前端环境变量
+### 3.8 配置前端环境变量
 
 ```bash
-cd leader-spark/frontend
+cd frontend
 
 # 创建环境变量文件
 cat > .env.local << 'EOF'
@@ -280,10 +481,10 @@ NEXT_PUBLIC_ENABLE_USER_CHAT=true
 EOF
 ```
 
-### 2.11 启动前端服务
+### 3.9 启动前端服务
 
 ```bash
-cd leader-spark/frontend
+cd frontend
 
 # 开发模式
 pnpm dev
@@ -296,11 +497,11 @@ npm run dev
 
 ---
 
-## 三、生产环境部署
+## 四、生产环境部署
 
 适用于生产环境部署。
 
-### 3.1 上传代码到服务器
+### 4.1 上传代码到服务器
 
 #### 方式一：Git 克隆（推荐）
 
@@ -334,10 +535,10 @@ rm leader-spark.tar.gz
 cd leader-spark
 ```
 
-### 3.2 配置生产环境变量
+### 4.2 配置生产环境变量
 
 ```bash
-cd leader-spark/backend
+cd backend
 
 # 复制环境变量模板
 cp .env.example .env.production
@@ -373,10 +574,10 @@ CORS_ORIGINS=["https://your-domain.com"]
 LOG_LEVEL=WARNING
 ```
 
-### 3.3 创建生产环境 Docker Compose 文件
+### 4.3 创建生产环境 Docker Compose 文件
 
 ```bash
-cd leader-spark/deploy
+cd deploy
 
 # 创建生产环境配置
 cat > docker-compose.prod.yml << 'EOF'
@@ -445,7 +646,6 @@ services:
       - ../backend/.env.production
     environment:
       TZ: Asia/Shanghai
-      # 覆盖 docker-compose.yml 中的环境变量
     depends_on:
       postgres:
         condition: service_healthy
@@ -505,10 +705,10 @@ networks:
 EOF
 ```
 
-### 3.4 构建和启动服务
+### 4.4 构建和启动服务
 
 ```bash
-cd leader-spark/deploy
+cd deploy
 
 # 设置环境变量
 export POSTGRES_PASSWORD=your_secure_password_here
@@ -523,7 +723,7 @@ docker-compose -f docker-compose.prod.yml ps
 docker-compose -f docker-compose.prod.yml logs -f
 ```
 
-### 3.5 验证部署
+### 4.5 验证部署
 
 ```bash
 # 1. 检查数据库
@@ -544,15 +744,9 @@ curl http://localhost:6333/collections
 
 ---
 
-## 四、Nginx 反向代理配置
+## 五、Nginx 反向代理配置
 
-### 4.1 安装 Nginx
-
-```bash
-sudo apt install -y nginx
-```
-
-### 4.2 创建站点配置
+### 5.1 创建站点配置
 
 ```bash
 sudo nano /etc/nginx/sites-available/leader-spark
@@ -661,7 +855,7 @@ server {
 }
 ```
 
-### 4.3 启用配置
+### 5.2 启用配置
 
 ```bash
 # 删除默认配置
@@ -679,15 +873,9 @@ sudo systemctl reload nginx
 
 ---
 
-## 五、SSL 证书配置
+## 六、SSL 证书配置
 
-### 5.1 安装 Certbot
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-```
-
-### 5.2 获取 SSL 证书
+### 6.1 获取 SSL 证书
 
 ```bash
 # 自动获取并配置证书
@@ -699,7 +887,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 5.3 设置自动续期
+### 6.2 设置自动续期
 
 ```bash
 # 测试自动续期
@@ -712,12 +900,12 @@ sudo systemctl list-timers
 
 ---
 
-## 六、监控和维护
+## 七、监控和维护
 
-### 6.1 查看服务状态
+### 7.1 查看服务状态
 
 ```bash
-cd leader-spark/deploy
+cd deploy
 
 # 查看所有服务状态
 docker-compose ps
@@ -729,7 +917,7 @@ docker stats
 df -h
 ```
 
-### 6.2 查看日志
+### 7.2 查看日志
 
 ```bash
 # 查看所有服务日志
@@ -745,7 +933,7 @@ docker-compose logs -f qdrant
 docker-compose logs --tail=100 backend
 ```
 
-### 6.3 数据备份
+### 7.3 数据备份
 
 #### PostgreSQL 备份
 
@@ -792,7 +980,7 @@ docker run --rm \
   alpine tar xzf /backup/qdrant_YYYYMMDD_HHMMSS.tar.gz -C /data
 ```
 
-### 6.4 更新应用
+### 7.4 更新应用
 
 ```bash
 cd leader-spark
@@ -811,7 +999,7 @@ docker-compose -f docker-compose.prod.yml up -d --build
 docker-compose -f docker-compose.prod.yml restart backend
 ```
 
-### 6.5 查看资源使用
+### 7.5 查看资源使用
 
 ```bash
 # 容器资源使用
@@ -832,9 +1020,9 @@ docker system prune -a
 
 ---
 
-## 七、故障排查
+## 八、故障排查
 
-### 7.1 容器无法启动
+### 8.1 容器无法启动
 
 #### 问题：容器启动失败
 
@@ -873,7 +1061,7 @@ docker network inspect leader-spark-network
 docker-compose restart postgres
 ```
 
-### 7.2 API 错误
+### 8.2 API 错误
 
 #### 问题：后端 API 500 错误
 
@@ -904,7 +1092,7 @@ docker-compose exec leader-spark-frontend env | grep API
 docker-compose logs frontend
 ```
 
-### 7.3 内存不足
+### 8.3 内存不足
 
 #### 问题：服务因内存不足崩溃
 
@@ -925,7 +1113,7 @@ sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
-### 7.4 磁盘空间不足
+### 8.4 磁盘空间不足
 
 ```bash
 # 检查磁盘使用
@@ -943,9 +1131,9 @@ sudo find / -type f -size +100M -exec ls -lh {} \;
 
 ---
 
-## 八、安全建议
+## 九、安全建议
 
-### 8.1 立即执行
+### 9.1 立即执行
 
 | 安全措施 | 说明 |
 |---------|------|
@@ -955,7 +1143,7 @@ sudo find / -type f -size +100M -exec ls -lh {} \;
 | 启用 HTTPS | 使用 SSL 证书加密传输 |
 | 定期备份 | 设置自动备份策略 |
 
-### 8.2 应用安全
+### 9.2 应用安全
 
 | 措施 | 说明 |
 |------|------|
@@ -964,7 +1152,7 @@ sudo find / -type f -size +100M -exec ls -lh {} \;
 | 更新补丁 | 定期更新系统和依赖 |
 | 弱口扫描 | 定期进行安全扫描 |
 
-### 8.3 数据安全
+### 9.3 数据安全
 
 | 措施 | 说明 |
 |------|------|
@@ -974,11 +1162,12 @@ sudo find / -type f -size +100M -exec ls -lh {} \;
 
 ---
 
-## 九、快速部署脚本
+## 十、快速部署脚本
 
 创建一个一键部署脚本：
 
 ```bash
+cat > ~/deploy-leader-spark.sh << 'EOF'
 #!/bin/bash
 set -e
 
@@ -994,7 +1183,7 @@ if ! command -v docker &> /dev/null; then
     sudo systemctl enable docker
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
     echo "正在安装 Docker Compose..."
     sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
@@ -1018,7 +1207,7 @@ echo ""
 echo "正在配置环境变量..."
 
 # 创建 .env.production
-cat > "$PROJECT_DIR/backend/.env.production" << EOF
+cat > "$PROJECT_DIR/backend/.env.production" << ENV_EOF
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://your-domain.com
@@ -1047,7 +1236,7 @@ MAIL_PASSWORD=WVuUuxnuBBiWqi2x
 
 # CORS 配置
 CORS_ORIGINS=["https://your-domain.com"]
-EOF
+ENV_EOF
 
 # 更新 docker-compose.yml
 sed -i "s/your_secure_password_here/$DB_PASSWORD/g" "$PROJECT_DIR/deploy/docker-compose.yml"
@@ -1079,17 +1268,19 @@ echo "  API 文档: http://your-server-ip:8000/docs"
 echo ""
 echo "查看日志："
 echo "  docker-compose logs -f"
+EOF
+
+chmod +x ~/deploy-leader-spark.sh
 ```
 
 使用方法：
 
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+~/deploy-leader-spark.sh
 ```
 
 ---
 
-**文档版本**: v2.0
+**文档版本**: v2.1
 **最后更新**: 2025-02-08
 **维护者**: Leader-Spark Team
