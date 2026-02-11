@@ -16,9 +16,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
-      {/* Header with Logo and Theme toggle */}
-      <header className="px-4 sm:px-6 lg:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      {/* Header with Logo and Theme toggle - full width */}
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-slate-700">
+        <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">

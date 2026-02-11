@@ -73,7 +73,7 @@ export async function sendWelcomeEmail(email: string, name?: string) {
           <h1>🎉 欢迎加入 Auto-Tools</h1>
         </div>
         <div class="content">
-          <p>您好${name ? `，${name}`：}，</p>
+          <p>您好${name ? `, ${name}` : ``},</p>
           <p>感谢您注册 Auto-Tools 自动化工具平台！</p>
           <p>我们提供上百种实用工具，帮助您提高工作效率。</p>
           <p style="text-align: center;">

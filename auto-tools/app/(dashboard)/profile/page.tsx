@@ -89,9 +89,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <label className="text-sm text-gray-500 dark:text-gray-400">注册时间</label>
-            <p className="text-gray-900 dark:text-white font-medium">
-              {session?.user?.createdAt ? new Date(session.user.createdAt as string).toLocaleDateString('zh-CN') : '-'}
-            </p>
+            <p className="text-gray-900 dark:text-white font-medium">-</p>
           </div>
         </div>
       </div>

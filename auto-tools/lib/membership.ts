@@ -32,7 +32,9 @@ export function getMembershipDisplayName(plan: string | null | undefined): strin
 
 // Get membership permissions
 export function getMembershipPermissions(plan: string | null | undefined) {
-  const permissions = {
+  type MembershipPlan = 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+
+  const permissions: Record<string, any> = {
     FREE: {
       maxDailyUses: 10,
       canUsePaidTools: false,

@@ -164,7 +164,7 @@ export default function MembershipPage() {
                 </div>
 
                 <ul className="mt-6 space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                  {getMembershipPermissions(planInfo.key).features.map((feature, idx) => (
+                  {getMembershipPermissions(planInfo.key).features.map((feature: string, idx: number) => (
                     <li key={idx} className="flex items-center">
                       <span className="mr-2">✓</span>
                       {feature}
