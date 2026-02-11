@@ -34,7 +34,7 @@ export default function HomePage() {
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all border border-gray-200 dark:border-slate-700"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-all"
             aria-label="切换主题"
           >
             <span className="text-xl">{theme === 'light' ? '🌙' : '☀️'}</span>
