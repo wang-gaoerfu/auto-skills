@@ -16,22 +16,37 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
-      {/* Theme toggle */}
-      <div className="absolute top-4 right-4">
-        <button
-          onClick={toggleTheme}
-          className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all"
-          aria-label="切换主题"
-        >
-          {theme === 'light' ? '🌙' : '☀️'}
-        </button>
-      </div>
+      {/* Header with Logo and Theme toggle - Full width */}
+      <header className="px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Auto-Tools</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">墨飞科技工作室 · 巨飞AI</p>
+            </div>
+          </div>
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all"
+            aria-label="切换主题"
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+        </div>
+      </header>
 
-      {/* Hero section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* Hero section - Centered content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-6">
-            Auto-Tools
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            自动化工具平台
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             自动化工具平台 - 上百种实用工具，一站式解决您的需求
@@ -127,8 +142,13 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-600 dark:text-gray-400 text-sm">
-          <p>&copy; 2024 Auto-Tools. All rights reserved.</p>
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+            &copy; 2024 Auto-Tools. All rights reserved.
+          </p>
+          <p className="text-gray-500 dark:text-gray-500 text-sm">
+            由 <span className="text-blue-600 dark:text-blue-400 font-medium">巨飞AI</span> 精心打造 · <span className="text-blue-600 dark:text-blue-400 font-medium">墨飞科技工作室</span> 出品
+          </p>
         </div>
       </footer>
     </div>

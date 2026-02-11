@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { sendMembershipEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,6 +55,16 @@ export async function POST(req: NextRequest) {
       },
       include: { user: true }
     })
+
+    // 发送邮件通知
+    if (updated.user.email) {
+      await sendMembershipEmail(
+        updated.user.email,
+        updated.user.name || updated.user.email.split('@')[0],
+        'approved',
+        updated.plan
+      )
+    }
 
     return NextResponse.json({
       success: true,

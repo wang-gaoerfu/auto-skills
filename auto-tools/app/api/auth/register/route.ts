@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { registerSchema } from '@/lib/validations'
+import { sendWelcomeEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,6 +61,11 @@ export async function POST(req: NextRequest) {
         approvedAt: new Date(),
         approvedBy: 'SYSTEM',
       }
+    })
+
+    // 发送欢迎邮件（异步，不阻塞响应）
+    sendWelcomeEmail(user.email, user.name || undefined).catch(err => {
+      console.error('发送欢迎邮件失败:', err)
     })
 
     return NextResponse.json({

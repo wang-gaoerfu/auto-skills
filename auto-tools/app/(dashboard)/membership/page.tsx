@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
+import { getMembershipPermissions } from '@/lib/membership'
 
 interface MembershipPrices {
   FREE: { price: number; duration: number; name: string }
@@ -87,7 +88,7 @@ export default function MembershipPage() {
       case 'REJECTED':
         return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">✗ 已拒绝</span>
       default:
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">免费版</span>
+        return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">免费版(FREE)</span>
     }
   }
 
@@ -163,18 +164,12 @@ export default function MembershipPage() {
                 </div>
 
                 <ul className="mt-6 space-y-3 text-sm text-gray-600">
-                  <li className="flex items-center">
-                    <span className="mr-2">✓</span>
-                    使用全部工具
-                  </li>
-                  <li className="flex items-center">
-                    <span className="mr-2">✓</span>
-                    无次数限制
-                  </li>
-                  <li className="flex items-center">
-                    <span className="mr-2">✓</span>
-                    优先技术支持
-                  </li>
+                  {getMembershipPermissions(planInfo.key).features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center">
+                      <span className="mr-2">✓</span>
+                      {feature}
+                    </li>
+                  ))}
                 </ul>
 
                 <button
@@ -202,7 +197,7 @@ export default function MembershipPage() {
 
       {/* Free plan info */}
       <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">免费版</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">免费版(FREE)</h3>
         <p className="text-gray-600">
           注册即可使用免费工具，升级会员后可使用全部工具。
         </p>

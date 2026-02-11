@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { sendMembershipEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +27,8 @@ export async function POST(req: NextRequest) {
 
     // Get membership to check current status
     const membership = await prisma.membership.findUnique({
-      where: { id: membershipId }
+      where: { id: membershipId },
+      include: { user: true }
     })
 
     if (!membership) {
@@ -51,7 +53,19 @@ export async function POST(req: NextRequest) {
         rejectedAt: new Date(),
         rejectReason: reason || '',
       },
+      include: { user: true }
     })
+
+    // 发送邮件通知
+    if (updated.user.email) {
+      await sendMembershipEmail(
+        updated.user.email,
+        updated.user.name || updated.user.email.split('@')[0],
+        'rejected',
+        updated.plan,
+        reason
+      )
+    }
 
     return NextResponse.json({
       success: true,

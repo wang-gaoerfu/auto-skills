@@ -64,10 +64,10 @@ async function main() {
     {
       key: 'membership_prices',
       value: JSON.stringify({
-        FREE: { price: 0, duration: 0, name: '免费版' },
-        BASIC: { price: 29, duration: 30, name: '基础版' },
-        PRO: { price: 99, duration: 30, name: '专业版' },
-        ENTERPRISE: { price: 299, duration: 30, name: '企业版' },
+        FREE: { price: 0, duration: 0, name: '免费版(FREE)' },
+        BASIC: { price: 29, duration: 30, name: '基础版(BASIC)' },
+        PRO: { price: 99, duration: 30, name: '专业版(PRO)' },
+        ENTERPRISE: { price: 299, duration: 30, name: '企业版(ENTERPRISE)' },
       }),
     },
   ]
