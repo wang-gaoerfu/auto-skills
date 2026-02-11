@@ -30,6 +30,14 @@ interface MembershipsResponse {
   }
 }
 
+const statusOptions = [
+  { value: 'PENDING', label: '待审核', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  { value: 'APPROVED', label: '已通过', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  { value: 'REJECTED', label: '已拒绝', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  { value: 'EXPIRED', label: '已过期', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
+  { value: 'ALL', label: '全部', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+]
+
 export default function AdminMembershipPage() {
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,13 +133,13 @@ export default function AdminMembershipPage() {
   const getStatusBadge = (s: string) => {
     switch (s) {
       case 'APPROVED':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">已通过</span>
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">已通过</span>
       case 'PENDING':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">待审核</span>
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">待审核</span>
       case 'REJECTED':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">已拒绝</span>
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">已拒绝</span>
       case 'EXPIRED':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">已过期</span>
+        return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">已过期</span>
       default:
         return null
     }
@@ -145,7 +153,7 @@ export default function AdminMembershipPage() {
       ENTERPRISE: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400',
     }
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${colors[plan] || colors.FREE}`}>
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${colors[plan] || colors.FREE}`}>
         {getMembershipDisplayName(plan)}
       </span>
     )
@@ -153,23 +161,32 @@ export default function AdminMembershipPage() {
 
   return (
     <div className="space-y-6">
-      {/* 状态筛选 */}
-      <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-700 dark:text-gray-300">状态筛选:</span>
-        <select
-          value={status}
-          onChange={(e) => {
-            setStatus(e.target.value)
-            setPagination({ page:1, limit: pagination.limit, total:0, totalPages:0 })
-          }}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        >
-          <option value="PENDING">待审核</option>
-          <option value="APPROVED">已通过</option>
-          <option value="REJECTED">已拒绝</option>
-          <option value="EXPIRED">已过期</option>
-          <option value="ALL">全部</option>
-        </select>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">会员审核</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">审核用户的会员申请</p>
+        </div>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {statusOptions.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => {
+              setStatus(option.value)
+              setPagination({ page: 1, limit: pagination.limit, total: 0, totalPages: 0 })
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              status === option.value
+                ? `${option.color} ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900`
+                : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600'
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -178,31 +195,32 @@ export default function AdminMembershipPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+          {/* Table */}
+          <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+              <thead className="bg-gray-50 dark:bg-slate-700/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     用户
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     套餐
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     状态
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     申请时间
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     操作
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                 {memberships.map((m) => (
-                  <tr key={m.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <td className="px-6 py-4">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {m.user.name || '未设置'}
@@ -213,35 +231,35 @@ export default function AdminMembershipPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       {getPlanBadge(m.plan)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       {getStatusBadge(m.status)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {new Date(m.appliedAt).toLocaleString('zh-CN')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 text-right text-sm font-medium">
                       {m.status === 'PENDING' && !(m as any).processing ? (
-                        <>
+                        <div className="flex items-center justify-end gap-3">
                           <button
                             onClick={() => handleApprove(m.id)}
-                            className="text-green-600 hover:text-green-900 mr-4"
+                            className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 font-medium"
                           >
                             通过
                           </button>
                           <button
                             onClick={() => handleReject(m.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
                           >
                             拒绝
                           </button>
-                        </>
+                        </div>
                       ) : (m as any).processing ? (
-                        <span className="text-gray-500">处理中...</span>
+                        <span className="text-gray-400 dark:text-gray-500">处理中...</span>
                       ) : (
-                        <span className="text-gray-400">已处理</span>
+                        <span className="text-gray-400 dark:text-gray-500">已处理</span>
                       )}
                     </td>
                   </tr>
@@ -257,7 +275,7 @@ export default function AdminMembershipPage() {
             </table>
           </div>
 
-          {/* 翻页组件 */}
+          {/* Pagination */}
           <Pagination
             currentPage={pagination.page}
             totalPages={pagination.totalPages}

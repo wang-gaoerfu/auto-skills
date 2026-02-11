@@ -8,17 +8,17 @@ export default function HomePage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-gray-600 dark:text-gray-400">加载中...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
-      {/* Header with Logo and Theme toggle - Full width */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
+      {/* Header with Logo and Theme toggle */}
       <header className="px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-between items-center">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -34,34 +34,34 @@ export default function HomePage() {
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all"
+            className="p-2 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all border border-gray-200 dark:border-slate-700"
             aria-label="切换主题"
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            <span className="text-xl">{theme === 'light' ? '🌙' : '☀️'}</span>
           </button>
         </div>
       </header>
 
-      {/* Hero section - Centered content */}
+      {/* Hero section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
             自动化工具平台
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            自动化工具平台 - 上百种实用工具，一站式解决您的需求
+            上百种实用工具，一站式解决您的需求
           </p>
 
           <div className="flex justify-center gap-4">
             <Link
               href="/register"
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-lg hover:shadow-xl"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition shadow-lg hover:shadow-xl"
             >
               免费注册
             </Link>
             <Link
               href="/login"
-              className="px-8 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl"
+              className="px-8 py-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl"
             >
               立即登录
             </Link>
@@ -70,7 +70,7 @@ export default function HomePage() {
 
         {/* Features */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition">
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition border border-gray-100 dark:border-slate-700">
             <div className="text-4xl mb-4">🧰</div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">上百种工具</h3>
             <p className="text-gray-600 dark:text-gray-400">
@@ -78,7 +78,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition">
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition border border-gray-100 dark:border-slate-700">
             <div className="text-4xl mb-4">💎</div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">会员制度</h3>
             <p className="text-gray-600 dark:text-gray-400">
@@ -86,7 +86,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition">
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition border border-gray-100 dark:border-slate-700">
             <div className="text-4xl mb-4">⚡</div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">即开即用</h3>
             <p className="text-gray-600 dark:text-gray-400">
@@ -111,7 +111,7 @@ export default function HomePage() {
             ].map((cat) => (
               <div
                 key={cat.name}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition cursor-pointer"
+                className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg p-6 hover:shadow-xl transition border border-gray-100 dark:border-slate-700 cursor-pointer"
               >
                 <div className="text-3xl mb-2">{cat.icon}</div>
                 <h3 className="font-semibold text-gray-900 dark:text-white">{cat.name}</h3>
@@ -123,7 +123,7 @@ export default function HomePage() {
 
         {/* CTA */}
         <div className="mt-20 text-center">
-          <div className="bg-blue-600 dark:bg-blue-700 rounded-lg p-8 shadow-xl">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-8 shadow-xl">
             <h3 className="text-2xl font-bold text-white mb-4">
               开始使用 Auto-Tools
             </h3>
@@ -132,7 +132,7 @@ export default function HomePage() {
             </p>
             <Link
               href="/register"
-              className="inline-block px-8 py-3 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition shadow-lg"
+              className="inline-block px-8 py-3 bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-slate-700 transition shadow-lg"
             >
               免费注册
             </Link>
@@ -141,7 +141,7 @@ export default function HomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-700">
+      <footer className="mt-20 py-8 border-t border-gray-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
             &copy; 2024 Auto-Tools. All rights reserved.

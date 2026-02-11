@@ -60,7 +60,7 @@ export default function ProfilePage() {
         <p className="text-gray-600 dark:text-gray-400 mt-1">管理您的账户信息和查看使用记录</p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">账户信息</h2>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,7 +97,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">使用统计</h2>
           <div className="text-center py-6">
             <p className="text-5xl font-bold text-blue-600 dark:text-blue-400">{usageCount}</p>
@@ -105,7 +105,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">会员状态</h2>
           <div className="text-center py-6">
             {session?.user?.membershipStatus === 'APPROVED' ? (
@@ -145,7 +145,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">最近使用</h2>
         {recentUsage.length === 0 ? (
           <div className="text-center py-8">
@@ -195,7 +195,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">快捷操作</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <a href="/tools" className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition">

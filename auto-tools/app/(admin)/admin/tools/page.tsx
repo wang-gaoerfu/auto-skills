@@ -101,10 +101,11 @@ export default function AdminToolsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">工具管理</h2>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">管理系统中的所有工具</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">管理系统中的所有工具</p>
         </div>
       </div>
 
@@ -114,34 +115,35 @@ export default function AdminToolsPage() {
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+          {/* Table */}
+          <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+              <thead className="bg-gray-50 dark:bg-slate-700/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     工具
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     分类
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     类型
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     状态
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     使用次数
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     操作
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                 {tools.map((tool) => (
-                  <tr key={tool.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={tool.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
                         {tool.icon && <span className="text-2xl mr-3">{tool.icon}</span>}
                         <div>
@@ -150,11 +152,11 @@ export default function AdminToolsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {tool.category.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${
                         tool.isFree
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
                           : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400'
@@ -162,23 +164,23 @@ export default function AdminToolsPage() {
                         {tool.isFree ? '免费' : '会员'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${
                         tool.isActive
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          : 'bg-gray-100 text-gray-800 dark:bg-slate-700 dark:text-gray-300'
                       }`}>
                         {tool.isActive ? '已上架' : '已下架'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {tool.useCount}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">编辑</button>
+                    <td className="px-6 py-4 text-right text-sm font-medium space-x-3">
+                      <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">编辑</button>
                       <button
                         onClick={() => toggleToolActive(tool.id, tool.isActive)}
-                        className={tool.isActive ? 'text-gray-600 hover:text-gray-900' : 'text-green-600 hover:text-green-900'}
+                        className={tool.isActive ? 'text-gray-600 hover:text-gray-900 dark:text-gray-400' : 'text-green-600 hover:text-green-900 dark:text-green-400'}
                       >
                         {tool.isActive ? '下架' : '上架'}
                       </button>
@@ -196,7 +198,7 @@ export default function AdminToolsPage() {
             </table>
           </div>
 
-          {/* 翻页组件 */}
+          {/* Pagination */}
           <Pagination
             currentPage={pagination.page}
             totalPages={pagination.totalPages}

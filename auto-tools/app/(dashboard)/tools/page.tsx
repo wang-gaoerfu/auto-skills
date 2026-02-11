@@ -69,8 +69,8 @@ export default function ToolsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">工具箱</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">工具箱</h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           选择您需要的工具
         </p>
       </div>
@@ -84,7 +84,7 @@ export default function ToolsPage() {
             placeholder="搜索工具..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            className="w-full px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
           />
         </div>
 
@@ -92,7 +92,7 @@ export default function ToolsPage() {
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          className="px-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
         >
           <option value="">全部分类</option>
           {categories.map((cat) => (
@@ -106,11 +106,11 @@ export default function ToolsPage() {
       {/* Tools grid */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="text-gray-600">加载中...</div>
+          <div className="text-gray-600 dark:text-gray-400">加载中...</div>
         </div>
       ) : tools.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-gray-600">没有找到工具</div>
+          <div className="text-gray-600 dark:text-gray-400">没有找到工具</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,25 +118,25 @@ export default function ToolsPage() {
             <Link
               key={tool.id}
               href={`/tools/${tool.slug}`}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-md transition"
+              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6 hover:shadow-xl transition group"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center">
                     {tool.icon && <span className="text-2xl mr-2">{tool.icon}</span>}
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
                       {tool.name}
                     </h3>
                   </div>
-                  <p className="text-gray-600 text-sm mt-2">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
                     {tool.description}
                   </p>
                   <div className="mt-3 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       {tool.category.name}
                     </span>
                     {!tool.isFree && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
                         会员专享
                       </span>
                     )}
