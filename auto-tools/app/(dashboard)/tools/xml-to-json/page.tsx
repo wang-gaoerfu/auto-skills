@@ -8,7 +8,7 @@ export default function XmlToJsonPage() {
   const [xml, setXml] = useState('')
   const [json, setJson] = useState('')
   const [action, setAction] = useState('parse')
-  const [explicitArray, setExplicitArray] = useState(true)
+  const [explicitArray, setExplicitArray] = useState(false)
   const [trim, setTrim] = useState(true)
 
   const handleProcess = async () => {

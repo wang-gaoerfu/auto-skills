@@ -35,10 +35,29 @@ Auto-Tools 是一个面向用户的自动化工具集合平台，提供上百种
 ## 快速开始
 
 ### 1. 安装依赖
+
+**注意**：项目使用了 Puppeteer，安装时可能因网络问题无法下载 Chrome 浏览器。
+
+**推荐安装方式**（跳过 Chrome 下载）：
 ```bash
 cd auto-tools
-npm install
+PUPPETEER_SKIP_DOWNLOAD=true npm install
 ```
+
+**如果安装失败**，可以尝试以下方法：
+- 方法1：设置环境变量跳过下载（推荐）
+  ```bash
+  # Linux/Mac
+  PUPPETEER_SKIP_DOWNLOAD=true npm install
+
+  # Windows PowerShell
+  $env:PUPPETEER_SKIP_DOWNLOAD="true"; npm install
+
+  # Windows CMD
+  set PUPPETEER_SKIP_DOWNLOAD=true && npm install
+  ```
+- 方法2：使用国内镜像（需单独配置）
+- 方法3：安装后手动配置 Chrome 路径
 
 ### 2. 配置环境变量
 复制 `.env.example` 到 `.env` 并修改配置：

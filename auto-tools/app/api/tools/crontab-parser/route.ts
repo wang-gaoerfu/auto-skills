@@ -9,9 +9,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 })
     }
 
-    const { cron, action = 'parse' } = await request.json()
+    const { expression, cron, action = 'parse', count = 10 } = await request.json()
 
-    if (!cron) {
+    // 兼容前端发送的 expression 参数
+    const cronExpression = expression || cron
+
+    if (!cronExpression) {
       return NextResponse.json({ error: '请输入 Crontab 表达式' }, { status: 400 })
     }
 
@@ -19,29 +22,50 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'parse':
-        result = parseCron(cron)
+        const parsed = parseCron(cronExpression)
+        result = {
+          valid: !parsed.error,
+          description: parsed.description || parsed.error,
+          fields: [
+            { raw: parsed.minute?.description || '-' },
+            { raw: parsed.hour?.description || '-' },
+            { raw: parsed.day?.description || '-' },
+            { raw: parsed.month?.description || '-' },
+            { raw: parsed.weekday?.description || '-' },
+          ],
+          raw: parsed,
+        }
         break
 
       case 'validate':
-        result = validateCron(cron)
+        const validated = validateCron(cronExpression)
+        result = {
+          valid: validated.valid,
+          description: validated.valid ? '✅ 有效的 Crontab 表达式' : validated.error || '❌ 无效的 Crontab 表达式',
+          errors: validated.errors,
+        }
         break
 
       case 'next':
-        result = getNextExecutions(cron, 10)
+        const nextData = getNextExecutions(cronExpression, count)
+        result = {
+          valid: true,
+          nextRuns: nextData.executions.map((e: any) => e.local),
+          raw: nextData,
+        }
         break
 
       case 'preview':
-        result = generatePreview(cron)
+        result = generatePreview(cronExpression)
         break
+
+      default:
+        result = { error: '未知操作' }
     }
 
     return NextResponse.json({
       success: true,
-      data: {
-        input: cron,
-        result,
-        action,
-      },
+      data: result,
     })
   } catch (error) {
     console.error('Crontab解析错误:', error)

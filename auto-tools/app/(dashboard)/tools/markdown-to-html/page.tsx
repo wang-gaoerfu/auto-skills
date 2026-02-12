@@ -90,42 +90,55 @@ export default function MarkdownToHtmlPage() {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Output */}
-          <div className="space-y-4">
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    HTML 输出
-                  </label>
-                  {html && (
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(html) }}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                    >
-                      复制
-                    </button>
-                  )}
-                </div>
-
-                <textarea
-                  readOnly
-                  value={html}
-                  placeholder="HTML 代码将显示在这里..."
-                  className="w-full h-64 px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white resize-none font-mono text-sm"
-                />
-
+        {/* Output */}
+        <div className="space-y-4">
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  HTML 输出
+                </label>
                 {html && (
-                  <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">预览:</div>
-                    <div
-                      className="prose prose-sm max-w-none dark:prose-invert"
-                      dangerouslySetInnerHTML={{ __html: html }}
-                    />
-                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(html) }}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    复制
+                  </button>
                 )}
               </div>
+
+              <textarea
+                readOnly
+                value={html}
+                placeholder="HTML 代码将显示在这里..."
+                className="w-full h-64 px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white resize-none font-mono text-sm"
+              />
+
+              {html && (
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg overflow-auto max-h-96">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">预览:</div>
+                  <div
+                    className="prose prose-sm max-w-none dark:prose-invert
+                      prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-2
+                      prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+                      prose-p:mb-2 prose-p:leading-6
+                      prose-strong:font-bold prose-em:italic
+                      prose-code:text-pink-600 prose-code:bg-gray-100 dark:prose-code:bg-slate-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                      prose-pre:bg-gray-900 dark:prose-pre:bg-black prose-pre:p-4
+                      prose-ul:list-disc prose-ol:list-decimal prose-li:mb-1
+                      prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic
+                      prose-table:border-collapse prose-table:border prose-table:border-gray-300
+                      prose-th:border prose-th:border-gray-300 prose-th:bg-gray-50 prose-th:px-3 prose-th:py-2
+                      prose-td:border prose-td:border-gray-300 prose-td:px-3 prose-td:py-2
+                      prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                      prose-hr:border-gray-200 prose-hr:my-4"
+                    dangerouslySetInnerHTML={{ __html: html }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

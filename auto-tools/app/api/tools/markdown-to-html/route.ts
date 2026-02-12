@@ -3,6 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { marked } from 'marked'
 
+// 配置 marked 选项
+marked.setOptions({
+  gfm: true, // GitHub Flavored Markdown (支持表格、删除线等)
+  breaks: false, // 不把单个换行符转换为 <br>
+  gfmHeadingId: true, // 为标题生成 ID
+})
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,12 +22,6 @@ export async function POST(request: NextRequest) {
     if (typeof markdown !== 'string') {
       return NextResponse.json({ error: '请输入 Markdown 内容' }, { status: 400 })
     }
-
-    // 配置 marked 选项
-    marked.setOptions({
-      gfm: options.gfm !== false, // GitHub Flavored Markdown
-      breaks: options.breaks || false,
-    })
 
     const html = marked.parse(markdown)
 

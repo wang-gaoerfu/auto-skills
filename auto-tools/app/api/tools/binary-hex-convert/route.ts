@@ -9,9 +9,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 })
     }
 
-    const { text, from = '10', to = '16', action = 'convert' } = await request.json()
+    const { text, input, from, to, fromBase, toBase, action = 'convert' } = await request.json()
 
-    if (typeof text !== 'string') {
+    // 兼容前端发送的参数名
+    const inputText = text || input
+    const fromBaseValue = from || fromBase || 10
+    const toBaseValue = to || toBase || 16
+
+    if (typeof inputText !== 'string') {
       return NextResponse.json({ error: '请输入数字' }, { status: 400 })
     }
 
@@ -20,12 +25,12 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'convert':
-        result = convertBase(text, from, to)
+        result = convertBase(inputText, fromBaseValue, toBaseValue)
         break
       case 'all':
         // 转换到所有常见进制
         const bases = [2, 8, 10, 16]
-        const num = parseInt(text, from)
+        const num = parseInt(inputText, fromBaseValue)
         if (isNaN(num)) {
           return NextResponse.json({ error: '无效的数字' }, { status: 400 })
         }
@@ -36,16 +41,16 @@ export async function POST(request: NextRequest) {
         break
       case 'table':
         // 生成转换表
-        results = generateConversionTable(text, from)
+        results = generateConversionTable(inputText, fromBaseValue)
         break
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        input: text,
-        from,
-        to,
+        input: inputText,
+        from: fromBaseValue,
+        to: toBaseValue,
         result,
         results,
         action,

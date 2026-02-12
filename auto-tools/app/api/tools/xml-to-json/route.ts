@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { parseString } from 'xml2js'
+import { parseString, Builder } from 'xml2js'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,30 +10,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '请先登录' }, { status: 401 })
     }
 
-    const { xml, options = {} } = await request.json()
+    const { input, action = 'parse', options = {} } = await request.json()
 
-    if (typeof xml !== 'string') {
-      return NextResponse.json({ error: '请输入 XML 内容' }, { status: 400 })
+    if (!input || typeof input !== 'string') {
+      return NextResponse.json({ error: '请输入内容' }, { status: 400 })
     }
 
     try {
-      const result = await parseXML(xml, options)
+      let result: string
+
+      if (action === 'parse') {
+        // XML -> JSON
+        const json = await parseXML(input, options)
+        result = JSON.stringify(json, null, 2)
+      } else {
+        // JSON -> XML
+        const jsonObj = JSON.parse(input)
+        result = await buildXML(jsonObj, options)
+      }
 
       return NextResponse.json({
         success: true,
         data: {
-          xml,
-          json: result,
+          result,
           stats: {
-            xmlSize: xml.length,
-            jsonSize: JSON.stringify(result).length,
+            inputSize: input.length,
+            outputSize: result.length,
           },
         },
       })
     } catch (error) {
       return NextResponse.json({
         success: false,
-        error: error instanceof Error ? error.message : 'XML 解析失败',
+        error: error instanceof Error ? error.message : '解析失败',
       }, { status: 400 })
     }
   } catch (err) {
@@ -45,12 +54,12 @@ export async function POST(request: NextRequest) {
 async function parseXML(xml: string, options: any): Promise<any> {
   return new Promise((resolve, reject) => {
     parseString(xml, {
-      explicitArray: options.explicitArray !== false,
+      explicitArray: options.explicitArray === true,
       ignoreAttrs: options.ignoreAttrs || false,
       mergeAttrs: options.mergeAttrs || false,
       trim: options.trim !== false,
       normalize: options.normalize !== false,
-      explicitRoot: options.explicitRoot || false,
+      explicitRoot: true,
       explicitChildren: options.explicitChildren || false,
       charsAsChildren: options.charsAsChildren || false,
       includeWhiteChars: options.includeWhiteChars || false,
@@ -61,5 +70,20 @@ async function parseXML(xml: string, options: any): Promise<any> {
         resolve(result)
       }
     })
+  })
+}
+
+async function buildXML(obj: any, options: any): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const builder = new Builder({
+      rootName: options.rootName || 'root',
+      xmldec: options.xmldec !== false ? { version: '1.0', encoding: 'UTF-8' } : undefined,
+    })
+    try {
+      const xml = builder.buildObject(obj)
+      resolve(xml)
+    } catch (err) {
+      reject(err)
+    }
   })
 }
