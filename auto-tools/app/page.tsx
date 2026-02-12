@@ -106,8 +106,8 @@ export default function HomePage() {
               { name: '文本处理', icon: '📝', desc: '字数统计、格式转换' },
               { name: '数据转换', icon: '🔄', desc: 'JSON、XML、Base64' },
               { name: '开发工具', icon: '👨‍💻', desc: 'UUID、Hash、正则' },
-              { name: '加密解密', icon: '🔒', desc: '各种加密算法' },
-              { name: '时间日期', icon: '📅', desc: '时间戳、格式转换' },
+              { name: '网络工具', icon: '🌐', desc: '视频下载、链接解析' },
+              { name: '编码解码', icon: '🔤', desc: 'URL、Base64编解码' },
             ].map((cat) => (
               <div
                 key={cat.name}
