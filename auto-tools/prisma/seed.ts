@@ -85,10 +85,9 @@ async function main() {
   const textCategory = await prisma.toolCategory.findUnique({ where: { slug: 'text-processing' } })
   const dataCategory = await prisma.toolCategory.findUnique({ where: { slug: 'data-conversion' } })
   const devCategory = await prisma.toolCategory.findUnique({ where: { slug: 'dev-tools' } })
-  const datetimeCategory = await prisma.toolCategory.findUnique({ where: { slug: 'datetime-tools' } })
   const networkCategory = await prisma.toolCategory.findUnique({ where: { slug: 'network-tools' } })
 
-  if (!textCategory || !dataCategory || !devCategory || !datetimeCategory || !networkCategory) {
+  if (!textCategory || !dataCategory || !devCategory || !networkCategory) {
     console.log('警告: 部分分类未找到，跳过工具创建')
   } else {
     // 创建文本处理工具
@@ -117,10 +116,9 @@ async function main() {
     const dataTools = [
       { name: 'JSON格式化', slug: 'json-format', description: '格式化或压缩 JSON 数据', icon: '📋', isFree: true, sortOrder: 1 },
       { name: 'XML转JSON', slug: 'xml-to-json', description: '将 XML 转换为 JSON', icon: '🔄', isFree: true, sortOrder: 2 },
-      { name: 'CSV转JSON', slug: 'csv-to-json', description: '将 CSV 转换为 JSON 数组', icon: '📊', isFree: true, sortOrder: 3 },
-      { name: 'Base64编解码', slug: 'base64', description: 'Base64 编码或解码', icon: '🔐', isFree: true, sortOrder: 4 },
-      { name: 'URL编解码', slug: 'url-encode', description: 'URL 编码或解码', icon: '🔗', isFree: true, sortOrder: 5 },
-      { name: '进制转换', slug: 'binary-hex-convert', description: '二进制、十六进制、十进制之间的转换', icon: '🔢', isFree: true, sortOrder: 6 },
+      { name: 'Base64编解码', slug: 'base64', description: 'Base64 编码或解码', icon: '🔐', isFree: true, sortOrder: 3 },
+      { name: 'URL编解码', slug: 'url-encode', description: 'URL 编码或解码', icon: '🔗', isFree: true, sortOrder: 4 },
+      { name: '进制转换', slug: 'binary-hex-convert', description: '二进制、十六进制、十进制之间的转换', icon: '🔢', isFree: true, sortOrder: 5 },
     ]
 
     for (const tool of dataTools) {
@@ -137,10 +135,8 @@ async function main() {
 
     // 创建开发工具
     const devTools = [
-      { name: 'UUID生成器', slug: 'uuid-generator', description: '生成 UUID (通用唯一标识符)', icon: '🆔', isFree: true, sortOrder: 1 },
-      { name: 'Hash生成器', slug: 'hash-generator', description: '生成文本的 MD5、SHA-1、SHA-256 等 Hash 值', icon: '🔐', isFree: true, sortOrder: 2 },
-      { name: '颜色转换', slug: 'color-converter', description: '颜色格式转换 (HEX, RGB, HSL)', icon: '🎨', isFree: true, sortOrder: 3 },
-      { name: 'Crontab解析', slug: 'crontab-parser', description: '解析 Crontab 表达式并显示执行时间', icon: '⏰', isFree: true, sortOrder: 4 },
+      { name: '颜色转换', slug: 'color-converter', description: '颜色格式转换 (HEX, RGB, HSL)', icon: '🎨', isFree: true, sortOrder: 1 },
+      { name: 'Crontab解析', slug: 'crontab-parser', description: '解析 Crontab 表达式并显示执行时间', icon: '⏰', isFree: true, sortOrder: 2 },
     ]
 
     for (const tool of devTools) {
@@ -154,23 +150,6 @@ async function main() {
       })
     }
     console.log(`创建 ${devTools.length} 个开发工具`)
-
-    // 创建时间日期工具
-    const datetimeTools = [
-      { name: '时间戳转换', slug: 'timestamp-convert', description: '时间戳与日期时间相互转换', icon: '🕐', isFree: true, sortOrder: 1 },
-    ]
-
-    for (const tool of datetimeTools) {
-      await prisma.tool.upsert({
-        where: { slug: tool.slug },
-        update: {},
-        create: {
-          ...tool,
-          categoryId: datetimeCategory.id,
-        },
-      })
-    }
-    console.log(`创建 ${datetimeTools.length} 个时间日期工具`)
   }
 
   // 创建网络工具
