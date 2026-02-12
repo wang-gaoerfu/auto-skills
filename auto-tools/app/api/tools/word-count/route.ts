@@ -50,8 +50,8 @@ function analyzeText(text: string, options: any): TextAnalysis {
   const characters = text.length
   const charactersNoSpaces = text.replace(/\s/g, '').length
 
-  // 字母统计（包括中英文）
-  const letters = (text.match(/[a-zA-Z\u4e00-\u9fa5]/g) || []).length
+  // 英文字母统计（仅统计a-zA-Z）
+  const letters = (text.match(/[a-zA-Z]/g) || []).length
 
   // 数字统计
   const digits = (text.match(/\d/g) || []).length
