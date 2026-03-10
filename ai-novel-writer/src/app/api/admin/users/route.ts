@@ -12,14 +12,14 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "20"
+    const limit = parseInt(searchParams.get("limit") || "20")
     const search = searchParams.get("search")
 
     const where = search
       ? {
           OR: [
-            { email: { contains: search, mode: "insensitive" } },
-            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" as const } },
+            { name: { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {}
@@ -51,19 +51,19 @@ export async function GET(request: NextRequest) {
 }
 
 // 更新用户状态
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest) {
   try {
     const session = await auth()
     if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ message: "无权限" }, { status: 403 })
     }
 
-    const { id } = await params
     const body = await request.json()
-    const { isActive, role } = body
+    const { id, isActive, role } = body
+
+    if (!id) {
+      return NextResponse.json({ message: "用户ID不能为空" }, { status: 400 })
+    }
 
     const user = await prisma.user.update({
       where: { id },

@@ -16,6 +16,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   PenTool,
   Plus,
   BookOpen,
@@ -64,6 +74,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [error, setError] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteChapterDialog, setShowDeleteChapterDialog] = useState(false)
+  const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null)
+  const [deletingChapter, setDeletingChapter] = useState(false)
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
 
   useEffect(() => {
     async function fetchProject() {
@@ -103,6 +118,63 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       setDeleting(false)
       setShowDeleteDialog(false)
     }
+  }
+
+  async function handleDeleteChapter() {
+    if (!chapterToDelete) return
+
+    setDeletingChapter(true)
+    try {
+      const res = await fetch(`/api/projects/${resolvedParams.id}/chapters/${chapterToDelete.id}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        // 更新本地状态
+        setProject(prev => prev ? {
+          ...prev,
+          chapters: prev.chapters.filter(c => c.id !== chapterToDelete.id)
+        } : null)
+      } else {
+        const data = await res.json()
+        alert(data.message || "删除章节失败")
+      }
+    } catch {
+      alert("删除章节失败，请稍后重试")
+    } finally {
+      setDeletingChapter(false)
+      setShowDeleteChapterDialog(false)
+      setChapterToDelete(null)
+    }
+  }
+
+  async function handleDeleteAllChapters() {
+    if (!project || chapters.length === 0) return
+
+    setDeletingAll(true)
+    try {
+      // 逐个删除所有章节
+      for (const chapter of chapters) {
+        const res = await fetch(`/api/projects/${resolvedParams.id}/chapters/${chapter.id}`, {
+          method: "DELETE",
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.message || "删除章节失败")
+        }
+      }
+      // 更新本地状态
+      setProject(prev => prev ? { ...prev, chapters: [] } : null)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "删除所有章节失败，请稍后重试")
+    } finally {
+      setDeletingAll(false)
+      setShowDeleteAllDialog(false)
+    }
+  }
+
+  function confirmDeleteChapter(chapter: Chapter) {
+    setChapterToDelete(chapter)
+    setShowDeleteChapterDialog(true)
   }
 
   if (loading) {
@@ -192,6 +264,52 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
+            {/* Delete Chapter Dialog */}
+            <AlertDialog open={showDeleteChapterDialog} onOpenChange={setShowDeleteChapterDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>确认删除章节</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    确定要删除章节「{chapterToDelete?.title}」吗？此操作不可撤销。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deletingChapter}>取消</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteChapter}
+                    disabled={deletingChapter}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deletingChapter && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    删除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete All Chapters Dialog */}
+            <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>确认删除所有章节</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    确定要删除「{project?.title}」的所有 {chapters.length} 个章节吗？此操作不可撤销，所有章节内容将被永久删除。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deletingAll}>取消</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAllChapters}
+                    disabled={deletingAll}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deletingAll && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    删除全部
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </header>
@@ -241,12 +359,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         {/* Chapters */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">章节列表</h2>
-          <Link href={`/projects/${resolvedParams.id}/chapters/new`}>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              添加章节
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {chapters.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteAllDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                删除全部章节
+              </Button>
+            )}
+            <Link href={`/projects/${resolvedParams.id}/chapters/new`}>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                添加章节
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {chapters.length === 0 ? (
@@ -260,29 +390,44 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         ) : (
           <div className="space-y-3">
             {chapters.map((chapter, index) => (
-              <Link
-                key={chapter.id}
-                href={`/projects/${resolvedParams.id}/chapters/${chapter.id}`}
-                className="block"
-              >
-                <Card className="hover:border-primary transition-all">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground w-8">
-                          {index + 1}
-                        </span>
-                        <div>
-                          <h3 className="font-medium">{chapter.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {chapter.wordCount.toLocaleString()} 字 · {new Date(chapter.updatedAt).toLocaleDateString()}
-                          </p>
-                        </div>
+              <Card key={chapter.id} className="hover:border-primary transition-all">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <Link
+                      href={`/projects/${resolvedParams.id}/chapters/${chapter.id}`}
+                      className="flex items-center gap-3 flex-1"
+                    >
+                      <span className="text-sm text-muted-foreground w-8">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <h3 className="font-medium">{chapter.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {chapter.wordCount.toLocaleString()} 字 · {new Date(chapter.updatedAt).toLocaleDateString()}
+                        </p>
                       </div>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/projects/${resolvedParams.id}/chapters/${chapter.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          confirmDeleteChapter(chapter)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}

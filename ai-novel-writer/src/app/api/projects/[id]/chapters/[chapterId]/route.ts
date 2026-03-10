@@ -97,8 +97,9 @@ export async function PUT(
     console.error("Update chapter error:", error)
 
     if (error instanceof z.ZodError) {
+      const zodError = error as unknown as { errors: Array<{ message: string }> }
       return NextResponse.json(
-        { message: error.errors[0].message },
+        { message: zodError.errors[0]?.message || "参数错误" },
         { status: 400 }
       )
     }

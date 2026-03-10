@@ -34,7 +34,7 @@ function htmlToMarkdown(html: string): string {
   markdown = markdown.replace(/<mark[^>]*>(.*?)<\/mark>/gi, "==$1==")
 
   // 引用
-  markdown = markdown.replace(/<blockquote[^>]*>(.*?)<\/blockquote>/gis, "> $1\n\n")
+  markdown = markdown.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, "> $1\n\n")
 
   // 列表
   markdown = markdown.replace(/<ul[^>]*>/gi, "\n")
@@ -44,7 +44,7 @@ function htmlToMarkdown(html: string): string {
   markdown = markdown.replace(/<li[^>]*>(.*?)<\/li>/gi, "- $1\n")
 
   // 段落
-  markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gis, "$1\n\n")
+  markdown = markdown.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, "$1\n\n")
   markdown = markdown.replace(/<br\s*\/?>/gi, "\n")
 
   // 清理剩余标签

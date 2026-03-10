@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,8 @@ import {
   Trash2,
   GripVertical,
   FileText,
+  BookOpen,
+  Users,
 } from "lucide-react"
 
 interface ChapterInput {
@@ -42,13 +45,27 @@ interface ChapterInput {
 interface Project {
   id: string
   title: string
+  genre?: string
   outline: string | null
+}
+
+interface KnowledgeEntry {
+  id: string
+  entryType: string
+  title: string
+  content: any
+}
+
+interface GenreInfo {
+  value: string
+  label: string
 }
 
 export default function NewChapterPage() {
   const params = useParams()
   const router = useRouter()
   const [project, setProject] = useState<Project | null>(null)
+  const [knowledge, setKnowledge] = useState<KnowledgeEntry[]>([])
   const [chapters, setChapters] = useState<ChapterInput[]>([
     { id: crypto.randomUUID(), title: "" },
   ])
@@ -59,22 +76,40 @@ export default function NewChapterPage() {
   const [aiAction, setAiAction] = useState("outline")
   const [aiPrompt, setAiPrompt] = useState("")
   const [aiCount, setAiCount] = useState(5)
+  const [genres, setGenres] = useState<GenreInfo[]>([])
+  const [selectedGenre, setSelectedGenre] = useState<string>("")
 
-  // 加载项目信息
+  // 加载项目信息和知识库
   useEffect(() => {
-    async function fetchProject() {
+    async function fetchData() {
       try {
-        const res = await fetch(`/api/projects/${params.id}`)
-        if (res.ok) {
-          const data = await res.json()
-          setProject(data.project)
+        const [projectRes, knowledgeRes, genresRes] = await Promise.all([
+          fetch(`/api/projects/${params.id}`).then((r) => r.json()),
+          fetch(`/api/knowledge?projectId=${params.id}`).then((r) => r.json()).catch(() => ({ entries: [] })),
+          fetch("/api/ai/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "getGenres", projectId: params.id, params: {} }),
+          }).then((r) => r.json()).catch(() => ({ genres: [] })),
+        ])
+
+        setProject(projectRes.project)
+        setKnowledge(knowledgeRes.entries || [])
+        setGenres(genresRes.genres || [])
+        if (projectRes.project?.genre) {
+          setSelectedGenre(projectRes.project.genre)
         }
       } catch (error) {
-        console.error("Failed to fetch project:", error)
+        console.error("Failed to fetch data:", error)
       }
     }
-    fetchProject()
+    fetchData()
   }, [params.id])
+
+  // 获取知识库信息
+  const characters = knowledge.filter((k) => k.entryType === "character")
+  const worldBuilding = knowledge.find((k) => k.entryType === "world")
+  const plots = knowledge.filter((k) => k.entryType === "plot")
 
   // 添加章节输入
   function addChapter() {
@@ -142,6 +177,13 @@ export default function NewChapterPage() {
     setError(null)
 
     try {
+      // 构建上下文信息
+      const contextInfo = {
+        characters: characters.map((c) => `${c.title}: ${c.content?.description || ""}`).join("\n"),
+        world: worldBuilding?.content?.description || "",
+        plot: plots.map((p) => p.content?.description || "").join("\n"),
+      }
+
       const res = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,6 +194,10 @@ export default function NewChapterPage() {
             prompt: aiPrompt,
             count: aiCount,
             outline: project?.outline || "",
+            genre: selectedGenre || project?.genre,
+            characters: contextInfo.characters,
+            world: contextInfo.world,
+            plot: contextInfo.plot,
           },
         }),
       })
@@ -337,16 +383,38 @@ export default function NewChapterPage() {
               AI 生成章节大纲
             </DialogTitle>
             <DialogDescription>
-              让 AI 帮你生成章节标题，快速搭建故事框架
+              让 AI 帮你生成章节标题，保持内容、人物、故事的一致性
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* 题材选择 */}
+            {genres.length > 0 && (
+              <div className="space-y-2">
+                <Label>小说题材</Label>
+                <Select
+                  value={selectedGenre || project?.genre || ""}
+                  onValueChange={(value) => setSelectedGenre(value || "")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择题材（影响生成风格）" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genres.map((g) => (
+                      <SelectItem key={g.value} value={g.value}>
+                        {g.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>生成方式</Label>
               <Select
                 value={aiAction}
-                onValueChange={setAiAction}
+                onValueChange={(value) => setAiAction(value || "outline")}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -363,7 +431,7 @@ export default function NewChapterPage() {
               <Label>章节数量</Label>
               <Select
                 value={aiCount.toString()}
-                onValueChange={(v) => setAiCount(parseInt(v))}
+                onValueChange={(v) => setAiCount(parseInt(v || "5"))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -399,6 +467,29 @@ export default function NewChapterPage() {
                 onChange={(e) => setAiPrompt(e.target.value)}
               />
             </div>
+
+            {/* 知识库提示 */}
+            {(characters.length > 0 || worldBuilding) && (
+              <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                <div className="text-xs font-medium text-muted-foreground">
+                  知识库已同步，AI 将保持一致性
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {characters.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Users className="h-3 w-3 mr-1" />
+                      {characters.length} 个人物
+                    </Badge>
+                  )}
+                  {worldBuilding && (
+                    <Badge variant="secondary" className="text-xs">
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      世界观
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
 
             {project?.outline && aiAction === "outline" && (
               <div className="p-3 bg-muted/50 rounded-md">
