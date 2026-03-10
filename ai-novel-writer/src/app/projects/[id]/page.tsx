@@ -8,15 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   PenTool,
   Plus,
@@ -167,27 +165,33 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>确认删除</AlertDialogTitle>
-                  <AlertDialogDescription>
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>确认删除</DialogTitle>
+                  <DialogDescription>
                     确定要删除项目「{project?.title}」吗？此操作不可撤销，所有章节和相关数据都将被永久删除。
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
-                  <AlertDialogAction
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteDialog(false)}
+                    disabled={deleting}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    variant="destructive"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     删除
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </header>
