@@ -70,12 +70,12 @@ export async function* generateTextStream(
     stream: true,
     })
 
-    for await (response.choices) {
-    const content = response.choices[0]?.delta?.content || ""
-    const done = response.choices[0]?.finish_reason === "stop"
+    for await (const chunk of response.choices) {
+      const content = chunk?.delta?.content || ""
+      const done = chunk?.finish_reason === "stop"
 
-    yield { content, done }
-  }
+      yield { content, done }
+    }
   } catch (error) {
     console.error("DeepSeek stream error:", error)
     throw error
@@ -210,6 +210,20 @@ export const PROMPT_TEMPLATES = {
 1. 对话自然生动
 2. 体现角色性格
 3. 推动情节发展`,
+
+  // 批量生成章节标题
+  batchChapterTitles: `作为专业的小说策划，请生成{{count}}个章节标题。
+
+小说大纲：{{outline}}
+主题/题材：{{theme}}
+补充说明：{{prompt}}
+
+要求：
+1. 每行一个章节标题，格式为"数字. 章节标题"（如"1. 初入江湖"）
+2. 标题要有吸引力，体现章节核心内容
+3. 章节之间要有逻辑连贯性，形成完整的故事线
+4. 标题长度3-8个字为宜
+5. 只输出章节标题列表，不要其他说明`,
 }
 
 // 替换提示词变量
@@ -371,5 +385,90 @@ export async function generateCharacter(params: {
     prompt,
     temperature: 0.8,
     maxTokens: 1000,
+  })
+}
+
+// 生成书名（API 兼容别名）
+export async function generateTitle(params: {
+  style?: string
+  genre?: string
+  elements?: string
+  prompt?: string
+}): Promise<string> {
+  const prompt = replaceVariables(PROMPT_TEMPLATES.generateTitle, {
+    style: params.style || "现代",
+    genre: params.genre || "都市",
+    elements: params.elements || params.prompt || "",
+  })
+  const result = await generateText({
+    prompt,
+    temperature: 0.9,
+  })
+  // 返回第一个书名
+  return result.split("\n").filter((line) => line.trim())[0] || ""
+}
+
+// 生成小说大纲（API 兼容别名）
+export async function generateOutline(params: {
+  style?: string
+  genre?: string
+  characters?: string
+  world?: string
+  background?: string
+  conflict?: string
+  prompt?: string
+}): Promise<string> {
+  const prompt = replaceVariables(PROMPT_TEMPLATES.generateOutline, {
+    style: params.style || "现代",
+    genre: params.genre || "都市",
+    characters: params.characters || "",
+    background: params.background || params.world || "",
+    conflict: params.conflict || "",
+  })
+  return generateText({
+    prompt,
+    temperature: 0.8,
+    maxTokens: 3000,
+  })
+}
+
+// 生成章节大纲（用于批量生成章节标题）
+export async function generateChapterOutline(params: {
+  outline?: string
+  prompt?: string
+  count?: number
+}): Promise<string> {
+  const prompt = replaceVariables(PROMPT_TEMPLATES.batchChapterTitles, {
+    outline: params.outline || "暂无大纲",
+    theme: "",
+    prompt: params.prompt || "",
+    count: params.count || 5,
+  })
+  return generateText({
+    prompt,
+    temperature: 0.8,
+    maxTokens: 2000,
+  })
+}
+
+// 生成章节内容（API 兼容别名）
+export async function generateChapterContent(params: {
+  chapterTitle: string
+  chapterOutline?: string
+  characters?: string
+  world?: string
+  previousContent?: string
+}): Promise<string> {
+  const prompt = replaceVariables(PROMPT_TEMPLATES.generateChapterContent, {
+    chapterTitle: params.chapterTitle,
+    chapterOutline: params.chapterOutline || "",
+    characters: params.characters || "",
+    world: params.world || "",
+    previousContent: params.previousContent || "",
+  })
+  return generateText({
+    prompt,
+    temperature: 0.85,
+    maxTokens: 4000,
   })
 }

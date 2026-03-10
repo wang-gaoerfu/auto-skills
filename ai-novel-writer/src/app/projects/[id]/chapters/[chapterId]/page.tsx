@@ -302,10 +302,7 @@ export default function ChapterEditPage() {
               取消
             </Button>
             <Button onClick={handleAIGenerate} disabled={aiLoading || !aiPrompt.trim()}>
-              {aiLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : null}
-              )}
+              {aiLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {aiLoading ? "生成中..." : "开始生成"}
             </Button>
           </DialogFooter>

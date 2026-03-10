@@ -56,6 +56,7 @@ export function NovelEditor({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
