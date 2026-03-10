@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,24 +12,35 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
-  PenTool,
   Crown,
   Zap,
   Check,
   Loader2,
   Gift,
+  BookOpen,
+  LogOut,
+  User,
+  Settings,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface MembershipInfo {
   plan: string
   status: string
   expiresAt: string | null
-  appliedAt: string
-  approvedAt: string | null
 }
 
 export default function MembershipPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [membership, setMembership] = useState<MembershipInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [activateCode, setActivateCode] = useState("")
@@ -82,6 +94,10 @@ export default function MembershipPage() {
     }
   }
 
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" })
+  }
+
   const planLabels: Record<string, { label: string; color: string }> = {
     FREE: { label: "免费版", color: "secondary" },
     VIP: { label: "VIP", color: "default" },
@@ -111,12 +127,43 @@ export default function MembershipPage() {
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <PenTool className="h-6 w-6" />
-            <span className="text-xl font-bold">AI小说创作能手</span>
+            <BookOpen className="h-6 w-6" />
+            <span className="text-xl font-bold">墨飞小说创造</span>
           </Link>
-          <Link href="/dashboard">
-            <Button variant="ghost">返回仪表盘</Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <Button variant="ghost">返回仪表盘</Button>
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground">
+                <User className="h-4 w-4" />
+                <span>{session?.user?.name || session?.user?.email}</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>我的账户</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Link href="/settings" className="flex items-center cursor-pointer w-full">
+                      <Settings className="h-4 w-4 mr-2" />
+                      设置
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/membership" className="flex items-center cursor-pointer w-full">
+                      <Crown className="h-4 w-4 mr-2" />
+                      会员中心
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-red-500 cursor-pointer">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>退出登录</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 

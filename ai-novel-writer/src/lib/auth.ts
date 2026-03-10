@@ -47,13 +47,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id
         token.role = user.role
         token.membershipPlan = user.membershipPlan
         token.membershipStatus = user.membershipStatus
       }
+
+      // 当更新 session 时，重新从数据库获取会员信息
+      if (trigger === "update" && session?.userId) {
+        const membership = await prisma.membership.findUnique({
+          where: { userId: session.userId }
+        })
+        token.membershipPlan = membership?.plan || "FREE"
+        token.membershipStatus = membership?.status || "APPROVED"
+      }
+
       return token
     },
     async session({ session, token }) {

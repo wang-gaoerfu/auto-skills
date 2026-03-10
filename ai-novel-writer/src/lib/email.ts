@@ -24,12 +24,12 @@ export async function sendVerificationCode(email: string, code: string) {
   const mailOptions = {
     from: process.env.MAIL_DEFAULT_SENDER,
     to: email,
-    subject: "【玄武零痕AI工具】邮箱验证码",
+    subject: "【墨飞小说创造】邮箱验证码",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #3b82f6;">邮箱验证码</h2>
         <p>您好，</p>
-        <p>您正在注册玄武零痕AI工具，验证码如下：</p>
+        <p>您正在注册墨飞小说创造，验证码如下：</p>
         <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 8px;">
           ${code}
         </div>
@@ -49,12 +49,12 @@ export async function sendWelcomeEmail(email: string, name?: string) {
   const mailOptions = {
     from: process.env.MAIL_DEFAULT_SENDER,
     to: email,
-    subject: "欢迎加入玄武零痕AI工具",
+    subject: "欢迎加入墨飞小说创造",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #3b82f6;">欢迎加入！</h2>
         <p>您好${name ? `，${name}` : ""}，</p>
-        <p>欢迎使用 <strong>玄武零痕AI工具</strong>！</p>
+        <p>欢迎使用 <strong>墨飞小说创造</strong>！</p>
         <p>您的账号已成功注册，现在可以开始体验AI辅助创作功能。</p>
         <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">快速开始：</h3>

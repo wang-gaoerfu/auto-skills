@@ -2,8 +2,10 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PenTool, BookOpen, FileText, Settings, LogOut, User } from "lucide-react"
+import { PenTool, BookOpen, FileText, Settings, Crown, Users, FolderOpen } from "lucide-react"
 import Link from "next/link"
+import { HeaderNav } from "@/components/layout/user-nav"
+import { prisma } from "@/lib/prisma"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -14,34 +16,17 @@ export default async function DashboardPage() {
 
   const user = session.user
 
+  // 从数据库获取最新的会员信息
+  const membership = await prisma.membership.findUnique({
+    where: { userId: user.id },
+    select: { plan: true, status: true, expiresAt: true }
+  })
+
+  const currentPlan = membership?.plan || "FREE"
+
   return (
     <div className="min-h-screen bg-background">
-      {/* 顶部导航 */}
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <PenTool className="h-6 w-6" />
-            <span className="text-xl font-bold">AI小说创作能手</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4" />
-              <span>{user.name || user.email}</span>
-              <span className="text-muted-foreground">|</span>
-              <span className="text-primary font-medium">
-                {user.membershipPlan === "FREE" ? "免费版" :
-                 user.membershipPlan === "VIP" ? "VIP" : "专业版"}
-              </span>
-            </div>
-            <form action="/api/auth/signout" method="POST">
-              <Button variant="ghost" size="sm" type="submit">
-                <LogOut className="h-4 w-4 mr-2" />
-                退出
-              </Button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <HeaderNav membershipPlan={currentPlan} />
 
       {/* 主内容 */}
       <main className="container px-4 py-8">
@@ -62,7 +47,7 @@ export default async function DashboardPage() {
           <Link href="/projects">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <BookOpen className="h-8 w-8 mb-2 text-primary" />
+                <FolderOpen className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle className="text-lg">我的项目</CardTitle>
                 <CardDescription>查看所有项目</CardDescription>
               </CardHeader>
@@ -72,7 +57,7 @@ export default async function DashboardPage() {
           <Link href="/knowledge">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <PenTool className="h-8 w-8 mb-2 text-primary" />
+                <Users className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle className="text-lg">知识库</CardTitle>
                 <CardDescription>管理人物和设定</CardDescription>
               </CardHeader>
@@ -89,6 +74,41 @@ export default async function DashboardPage() {
             </Card>
           </Link>
         </div>
+
+        {/* 会员信息 */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Crown className="h-5 w-5" />
+                <CardTitle>会员信息</CardTitle>
+              </div>
+              <Link href="/membership">
+                <Button variant="outline" size="sm">升级会员</Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">当前等级</p>
+                <p className="text-2xl font-bold text-primary">
+                  {currentPlan === "FREE" ? "免费版" :
+                   currentPlan === "VIP" ? "VIP" : "专业版"}
+                </p>
+              </div>
+              <div className="h-12 w-px bg-border" />
+              <div>
+                <p className="text-sm text-muted-foreground">权益说明</p>
+                <p className="text-sm">
+                  {currentPlan === "FREE" ? "每日5万字 · 1个项目 · 基础AI模型" :
+                   currentPlan === "VIP" ? "无限字数 · 10个项目 · DeepSeek V3" :
+                   "无限字数 · 无限项目 · DeepSeek + Kimi"}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 最近项目 */}
         <div>

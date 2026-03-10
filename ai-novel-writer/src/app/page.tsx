@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,13 +10,17 @@ export default function Home() {
       {/* 顶部导航 */}
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <PenTool className="h-6 w-6" />
-            <span className="text-xl font-bold">AI小说创作能手</span>
-          </div>
+            <span className="text-xl font-bold">墨飞小说创造</span>
+          </Link>
           <div className="flex items-center gap-4">
-            <Button variant="ghost">登录</Button>
-            <Button>注册</Button>
+            <Link href="/login">
+              <Button variant="ghost">登录</Button>
+            </Link>
+            <Link href="/register">
+              <Button>注册</Button>
+            </Link>
             <ThemeToggle />
           </div>
         </div>
@@ -33,8 +38,12 @@ export default function Home() {
             支持多种文学风格，让创作变得简单高效。
           </p>
           <div className="flex gap-4">
-            <Button size="lg">开始创作</Button>
-            <Button size="lg" variant="outline">了解更多</Button>
+            <Link href="/register">
+              <Button size="lg">开始创作</Button>
+            </Link>
+            <Link href="#features">
+              <Button size="lg" variant="outline">了解更多</Button>
+            </Link>
           </div>
         </div>
 
@@ -141,7 +150,7 @@ export default function Home() {
       {/* 底部 */}
       <footer className="border-t py-8">
         <div className="container px-4 text-center text-sm text-muted-foreground">
-          <p>© 2026 AI小说创作能手. 保留所有权利.</p>
+          <p>© 2026 墨飞小说创造. 保留所有权利.</p>
         </div>
       </footer>
     </div>
