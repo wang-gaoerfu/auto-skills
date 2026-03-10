@@ -3,14 +3,9 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PenTool, Plus, BookOpen, MoreVertical, Trash2, Edit } from "lucide-react"
+import { PenTool, Plus, BookOpen } from "lucide-react"
 import Link from "next/link"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ProjectCardMenu } from "@/components/projects/project-card-menu"
 
 export default async function ProjectsPage() {
   const session = await auth()
@@ -91,28 +86,10 @@ export default async function ProjectsPage() {
                         {project.title}
                       </CardTitle>
                     </Link>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8 opacity-0 group-hover:opacity-100">
-                        <MoreVertical className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/projects/${project.id}/edit`}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            编辑
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <form action={`/api/projects/${project.id}`} method="POST">
-                            <input type="hidden" name="_method" value="DELETE" />
-                            <button type="submit" className="flex items-center w-full">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              删除
-                            </button>
-                          </form>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ProjectCardMenu
+                      projectId={project.id}
+                      projectTitle={project.title}
+                    />
                   </div>
                   <CardDescription className="line-clamp-2">
                     {project.description || "暂无描述"}

@@ -1,12 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   PenTool,
   Plus,
@@ -15,7 +25,6 @@ import {
   Trash2,
   MoreVertical,
   ArrowLeft,
-  Calendar,
   Loader2,
   Settings,
 } from "lucide-react"
@@ -49,16 +58,19 @@ interface Project {
   membershipPlan: string
 }
 
-export default function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const resolvedParams = use(params)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     async function fetchProject() {
       try {
-        const res = await fetch(`/api/projects/${params.id}`)
+        const res = await fetch(`/api/projects/${resolvedParams.id}`)
         if (!res.ok) {
           throw new Error("Failed to fetch project")
         }
@@ -72,7 +84,28 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
       }
     }
     fetchProject()
-  }, [params.id])
+  }, [resolvedParams.id])
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/projects/${resolvedParams.id}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        router.push("/projects")
+        router.refresh()
+      } else {
+        const data = await res.json()
+        alert(data.message || "删除失败")
+      }
+    } catch {
+      alert("删除失败，请稍后重试")
+    } finally {
+      setDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -82,11 +115,11 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     )
   }
 
-  if (error) {
+  if (error || !project) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive mb-4">{error}</p>
+          <p className="text-destructive mb-4">{error || "项目不存在"}</p>
           <Link href="/projects">
             <Button>返回项目列表</Button>
           </Link>
@@ -95,7 +128,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
     )
   }
 
-  const chapters = project?.chapters || []
+  const chapters = project.chapters || []
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,23 +150,44 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                 <MoreVertical className="h-5 w-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/projects/${params.id}/edit`} className="flex items-center">
-                    <Edit className="h-4 w-4 mr-2" />
-                    编辑项目
-                  </Link>
+                <DropdownMenuItem onClick={() => router.push(`/projects/${resolvedParams.id}/edit`)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  编辑项目
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
-                  <form action={`/api/projects/${params.id}`} method="POST">
-                    <input type="hidden" name="_method" value="DELETE" />
-                    <button type="submit" className="flex items-center w-full">
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      删除项目
-                    </button>
-                  </form>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    setShowDeleteDialog(true)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  删除项目
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>确认删除</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    确定要删除项目「{project?.title}」吗？此操作不可撤销，所有章节和相关数据都将被永久删除。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    删除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </header>
@@ -153,7 +207,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
 
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-4 mb-8">
-          <Link href={`/projects/${params.id}/chapters/new`}>
+          <Link href={`/projects/${resolvedParams.id}/chapters/new`}>
             <Card className="hover:border-primary cursor-pointer transition-all">
               <CardHeader>
                 <Plus className="h-8 w-8 mb-2 text-primary" />
@@ -183,7 +237,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
         {/* Chapters */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">章节列表</h2>
-          <Link href={`/projects/${params.id}/chapters/new`}>
+          <Link href={`/projects/${resolvedParams.id}/chapters/new`}>
             <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
               添加章节
@@ -204,7 +258,7 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
             {chapters.map((chapter, index) => (
               <Link
                 key={chapter.id}
-                href={`/projects/${params.id}/chapters/${chapter.id}`}
+                href={`/projects/${resolvedParams.id}/chapters/${chapter.id}`}
                 className="block"
               >
                 <Card className="hover:border-primary transition-all">
@@ -217,24 +271,22 @@ export default function ProjectDetailPage({ params }: { params: { id: string } }
                         <div>
                           <h3 className="font-medium">{chapter.title}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {chapter.wordCount.toLocaleString()} 字 · {" "}
-                            {new Date(chapter.updatedAt).toLocaleDateString()}
+                            {chapter.wordCount.toLocaleString()} 字 · {new Date(chapter.updatedAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Stats */}
         <Separator className="my-8" />
         <div className="text-sm text-muted-foreground">
-          创建于 {new Date(project.createdAt).toLocaleDateString()} · {" "}
-          更新于 {new Date(project.updatedAt).toLocaleDateString()}
+          创建于 {new Date(project.createdAt).toLocaleDateString()} · 更新于 {new Date(project.updatedAt).toLocaleDateString()}
         </div>
       </main>
     </div>

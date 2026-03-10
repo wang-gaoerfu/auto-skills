@@ -1,9 +1,17 @@
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
 
-export default auth((req) => {
+export async function middleware(req: NextRequest) {
   const { nextUrl } = req
-  const isLoggedIn = !!req.auth
+
+  // 获取 JWT token（不需要数据库连接）
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+
+  const isLoggedIn = !!token
 
   // 需要登录才能访问的路由
   const protectedRoutes = ["/dashboard", "/projects", "/knowledge", "/settings"]
@@ -23,7 +31,7 @@ export default auth((req) => {
   }
 
   // 如果是管理员路由但不是管理员，返回403
-  if (isAdminRoute && req.auth?.user?.role !== "ADMIN") {
+  if (isAdminRoute && token?.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/", nextUrl))
   }
 
@@ -38,7 +46,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"]
