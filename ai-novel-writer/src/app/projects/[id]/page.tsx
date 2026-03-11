@@ -35,7 +35,9 @@ import {
   ArrowLeft,
   Loader2,
   Settings,
+  Eye,
 } from "lucide-react"
+import { marked } from "marked"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +81,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [deletingChapter, setDeletingChapter] = useState(false)
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [previewChapter, setPreviewChapter] = useState<Chapter | null>(null)
+  const [previewHtml, setPreviewHtml] = useState("")
 
   useEffect(() => {
     async function fetchProject() {
@@ -408,8 +412,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     </Link>
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="预览"
+                        onClick={async () => {
+                          setPreviewChapter(chapter)
+                          // 将 markdown 转换为 HTML
+                          const plainText = chapter.content.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ")
+                          const html = await marked.parse(plainText) as string
+                          setPreviewHtml(html)
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Link href={`/projects/${resolvedParams.id}/chapters/${chapter.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title="编辑">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -417,6 +435,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive"
+                        title="删除"
                         onClick={(e) => {
                           e.preventDefault()
                           confirmDeleteChapter(chapter)
@@ -438,6 +457,33 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           创建于 {new Date(project.createdAt).toLocaleDateString()} · 更新于 {new Date(project.updatedAt).toLocaleDateString()}
         </div>
       </main>
+
+      {/* 预览对话框 */}
+      <Dialog open={!!previewChapter} onOpenChange={() => setPreviewChapter(null)}>
+        <DialogContent className="!max-w-[60vw] !w-[60vw] h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{previewChapter?.title}</DialogTitle>
+            <DialogDescription>
+              {previewChapter?.wordCount.toLocaleString()} 字
+            </DialogDescription>
+          </DialogHeader>
+          <div
+            className="tiptap flex-1 overflow-y-auto p-6 border rounded-md bg-muted/30"
+            dangerouslySetInnerHTML={{ __html: previewHtml }}
+          />
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setPreviewChapter(null)}>
+              关闭
+            </Button>
+            <Link href={`/projects/${resolvedParams.id}/chapters/${previewChapter?.id}`}>
+              <Button onClick={() => setPreviewChapter(null)}>
+                <Edit className="h-4 w-4 mr-2" />
+                编辑
+              </Button>
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

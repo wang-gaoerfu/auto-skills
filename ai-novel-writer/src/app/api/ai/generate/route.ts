@@ -22,6 +22,7 @@ import {
   getContentMenu,
   replaceVariables,
   PROMPT_TEMPLATES,
+  generateProjectSuggestions,
 } from "@/lib/ai/deepseek"
 
 const requestSchema = z.object({
@@ -42,6 +43,7 @@ const requestSchema = z.object({
     "menuOptimize",
     "getGenres",
     "getMenus",
+    "generateProjectSuggestions",
   ]),
   projectId: z.string(),
   params: z.any(),
@@ -65,11 +67,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { action, projectId, params } = requestSchema.parse(body)
 
+    // 对于不需要项目的 action，直接处理
+    if (action === "getGenres") {
+      return NextResponse.json({ genres: getAllGenres() })
+    }
+
+    if (action === "generateProjectSuggestions") {
+      const result = await generateProjectSuggestions({
+        genre: params.genre || "urbanReborn",
+        novelLength: params.novelLength || "medium",
+      })
+      return NextResponse.json({ result })
+    }
+
     // 获取项目信息（如果有 projectId）
     let project = null
     let knowledge = null
 
-    if (projectId) {
+    if (projectId && projectId !== "new") {
       project = await prisma.project.findFirst({
         where: { id: projectId, userId: session.user.id },
         include: { chapters: { orderBy: { order: "asc" } } },
@@ -106,6 +121,9 @@ export async function POST(request: NextRequest) {
         result = await generateChapterOutlineTitles({
           ...params,
           outline: project?.outline || "",
+          title: project?.title || "",
+          description: project?.description || "",
+          novelLength: project?.novelLength || "medium",
         })
         break
 
@@ -220,6 +238,13 @@ export async function POST(request: NextRequest) {
           content: getContentMenu(menuGenre),
         }
         return NextResponse.json({ menus })
+
+      case "generateProjectSuggestions":
+        result = await generateProjectSuggestions({
+          genre: params.genre || "urbanReborn",
+          novelLength: params.novelLength || "medium",
+        })
+        break
 
       default:
         return NextResponse.json({ message: "未知操作" }, { status: 400 })

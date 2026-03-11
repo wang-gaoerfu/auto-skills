@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
 const createProjectSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(100, "标题最多100字"),
   description: z.string().max(500, "描述最多500字").optional(),
+  genre: z.string().optional(),
+  novelLength: z.enum(["micro", "short", "medium", "long"]).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, description } = createProjectSchema.parse(body)
+    const { title, description, genre, novelLength } = createProjectSchema.parse(body)
 
     // 检查项目数量限制
     const membership = await prisma.membership.findUnique({
@@ -75,6 +77,8 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         title,
         description: description || null,
+        genre: genre || null,
+        novelLength: novelLength || null,
       },
     })
 

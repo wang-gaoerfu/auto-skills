@@ -473,8 +473,10 @@ export default function ChapterEditPage() {
                 value={selectedGenre || project?.genre || ""}
                 onValueChange={(value) => setSelectedGenre(value || "")}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择题材（影响AI生成风格）" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择题材（影响AI生成风格）">
+                    {genres.find(g => g.value === (selectedGenre || project?.genre))?.label || "选择题材（影响AI生成风格）"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {genres.map((g) => (
@@ -493,8 +495,15 @@ export default function ChapterEditPage() {
                 value={aiAction}
                 onValueChange={(value) => setAiAction(value || "")}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {aiAction === "generateContent" ? "生成章节内容" :
+                     aiAction === "menuOptimize" ? "智能优化" :
+                     aiAction === "polish" ? "润色文本" :
+                     aiAction === "expand" ? "扩写细节" :
+                     aiAction === "continue" ? "续写内容" :
+                     aiAction === "removeAI" ? "去除AI味" : "选择操作"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="generateContent">

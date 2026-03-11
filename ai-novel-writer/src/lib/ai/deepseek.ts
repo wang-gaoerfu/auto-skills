@@ -626,6 +626,33 @@ export const CONTENT_MENU = [
 // ============================================
 
 export const PROMPT_TEMPLATES = {
+  // 生成项目建议（题材+长度 -> 标题+简介）
+  generateProjectSuggestions: `作为专业的网络小说策划，请根据以下条件生成3-5个小说项目建议：
+
+题材类型：{{genre}}
+小说长度：{{novelLength}}（{{wordCount}}）
+预估章节：{{chapterRange}}
+
+请为每个建议提供：
+1. 书名（3-6个字，有吸引力）
+2. 简介（100-200字，突出故事亮点）
+
+要求：
+1. 书名要符合题材风格，让人一看就想读
+2. 简要描述故事背景、主角设定、核心冲突
+3. 根据小说长度调整故事规模：
+   - 微小说：一个完整的小故事
+   - 短篇小说：紧凑的完整故事
+   - 中篇小说：有起承转合的中等规模故事
+   - 长篇小说：宏大的世界观和复杂的人物关系
+
+输出格式示例：
+1. 书名：XXXXX
+简介：XXXXXX
+
+2. 书名：XXXXX
+简介：XXXXXX`,
+
   // 生成书名
   generateTitle: `根据以下信息，生成5个吸引人的小说书名：
 风格：{{style}}
@@ -756,6 +783,8 @@ export const PROMPT_TEMPLATES = {
   // 批量生成章节标题
   batchChapterTitles: `作为专业的小说策划，请生成{{count}}个章节标题。
 
+书名：{{title}}
+简介：{{description}}
 小说大纲：{{outline}}
 主题/题材：{{theme}}
 补充说明：{{prompt}}
@@ -784,6 +813,8 @@ export interface PromptVariables {
   world?: string
   previousContent?: string
   selectedText?: string
+  description?: string
+  novelLength?: string
   [key: string]: string | number | undefined
 }
 
@@ -873,10 +904,16 @@ export async function generateGenreChapterContent(params: {
   chapterOutline?: string
   characters?: string
   world?: string
+  projectTitle?: string
+  projectDescription?: string
+  novelLength?: string
   background?: string
   relationships?: string
   plot?: string
   previousContent?: string
+  projectTitle?: string
+  projectDescription?: string
+  novelLength?: string
 }): Promise<string> {
   const config = getGenreConfig(params.genre)
   const template = config?.prompts.content || PROMPT_TEMPLATES.generateChapterContent
@@ -889,7 +926,10 @@ export async function generateGenreChapterContent(params: {
     background: params.background || "",
     relationships: params.relationships || "",
     plot: params.plot || "",
-    previousContent: params.previousContent || ""
+    previousContent: params.previousContent || "",
+    title: params.projectTitle || "",
+    description: params.projectDescription || "",
+    novelLength: params.novelLength || "medium"
   })
 
   return generateText({
@@ -1093,12 +1133,18 @@ export async function generateChapterOutlineTitles(params: {
   outline?: string
   prompt?: string
   count?: number
+  title?: string
+  description?: string
+  novelLength?: string
 }): Promise<string> {
   const prompt = replaceVariables(PROMPT_TEMPLATES.batchChapterTitles, {
+    title: params.title || "未命名小说",
+    description: params.description || "",
     outline: params.outline || "暂无大纲",
     theme: "",
     prompt: params.prompt || "",
     count: params.count || 5,
+    novelLength: params.novelLength || "medium",
   })
   return generateText({
     prompt,
@@ -1114,6 +1160,9 @@ export async function generateChapterContent(params: {
   characters?: string
   world?: string
   previousContent?: string
+  projectTitle?: string
+  projectDescription?: string
+  novelLength?: string
 }): Promise<string> {
   const prompt = replaceVariables(PROMPT_TEMPLATES.generateChapterContent, {
     chapterTitle: params.chapterTitle,
@@ -1121,6 +1170,9 @@ export async function generateChapterContent(params: {
     characters: params.characters || "",
     world: params.world || "",
     previousContent: params.previousContent || "",
+    title: params.projectTitle || "",
+    description: params.projectDescription || "",
+    novelLength: params.novelLength || "medium",
   })
   return generateText({
     prompt,
@@ -1189,5 +1241,43 @@ export async function executeMenuOptimize(params: {
     prompt,
     temperature: 0.7,
     maxTokens: 4000,
+  })
+}
+
+// ============================================
+// 项目建议生成
+// ============================================
+
+// 小说长度配置
+export const NOVEL_LENGTH_CONFIG: Record<string, {
+  label: string
+  wordCount: string
+  chapterRange: string
+}> = {
+  micro: { label: "微小说", wordCount: "100-500字", chapterRange: "1章" },
+  short: { label: "短篇小说", wordCount: "500-20000字", chapterRange: "1-5章" },
+  medium: { label: "中篇小说", wordCount: "2-10万字", chapterRange: "10-30章" },
+  long: { label: "长篇小说", wordCount: "10万字以上", chapterRange: "50章以上" },
+}
+
+// 生成项目建议
+export async function generateProjectSuggestions(params: {
+  genre: string
+  novelLength: string
+}): Promise<string> {
+  const genreConfig = getGenreConfig(params.genre)
+  const lengthConfig = NOVEL_LENGTH_CONFIG[params.novelLength] || NOVEL_LENGTH_CONFIG.medium
+
+  const prompt = replaceVariables(PROMPT_TEMPLATES.generateProjectSuggestions, {
+    genre: genreConfig?.name || params.genre,
+    novelLength: lengthConfig.label,
+    wordCount: lengthConfig.wordCount,
+    chapterRange: lengthConfig.chapterRange,
+  })
+
+  return generateText({
+    prompt,
+    temperature: 0.9,
+    maxTokens: 2000,
   })
 }

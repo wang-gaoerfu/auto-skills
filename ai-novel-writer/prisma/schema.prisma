@@ -90,6 +90,8 @@ model Project {
   coverImage    String?
   outline       Json?
   settings      Json?
+  genre         String?// 小说题材
+  novelLength   String?   // 小说长度: micro, short, medium, long
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

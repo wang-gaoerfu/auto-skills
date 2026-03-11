@@ -198,6 +198,9 @@ export default function NewChapterPage() {
             characters: contextInfo.characters,
             world: contextInfo.world,
             plot: contextInfo.plot,
+            title: project?.title || "",
+            description: project?.description || "",
+            novelLength: project?.novelLength || "medium",
           },
         }),
       })
@@ -396,8 +399,10 @@ export default function NewChapterPage() {
                   value={selectedGenre || project?.genre || ""}
                   onValueChange={(value) => setSelectedGenre(value || "")}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择题材（影响生成风格）" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="选择题材（影响生成风格）">
+                      {genres.find(g => g.value === (selectedGenre || project?.genre))?.label || "选择题材（影响生成风格）"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {genres.map((g) => (
@@ -416,8 +421,10 @@ export default function NewChapterPage() {
                 value={aiAction}
                 onValueChange={(value) => setAiAction(value || "outline")}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {aiAction === "outline" ? "根据大纲生成" : aiAction === "theme" ? "根据主题生成" : "自定义提示"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="outline">根据大纲生成</SelectItem>
@@ -433,8 +440,10 @@ export default function NewChapterPage() {
                 value={aiCount.toString()}
                 onValueChange={(v) => setAiCount(parseInt(v || "5"))}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {aiCount} 章
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="3">3 章</SelectItem>
