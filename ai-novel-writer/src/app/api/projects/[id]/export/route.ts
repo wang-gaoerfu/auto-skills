@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { exportProject } from "@/lib/export"
+import { exportProject, ExportFormat } from "@/lib/export"
 
 export async function GET(
   request: NextRequest,
@@ -15,19 +15,32 @@ export async function GET(
     const { id } = await params
     const { searchParams } = new URL(request.url)
 
-    const format = (searchParams.get("format") || "txt") as "txt" | "markdown" | "html"
+    const format = (searchParams.get("format") || "txt") as ExportFormat
     const includeMetadata = searchParams.get("includeMetadata") !== "false"
+    const startChapter = searchParams.get("startChapter")
+    const endChapter = searchParams.get("endChapter")
 
-    const result = await exportProject(id, format as "txt" | "markdown" | "html", {
-      format: format as "txt" | "markdown" | "html",
+    // 构建导出选项
+    const options = {
+      format,
       includeMetadata,
-    })
+      chapterRange: startChapter && endChapter
+        ? {
+            start: parseInt(startChapter, 10),
+            end: parseInt(endChapter, 10),
+          }
+        : undefined,
+    }
+
+    const result = await exportProject(id, format, options)
 
     // 返回文件
-    return new NextResponse(result.content, {
+    return new NextResponse(result.content as BodyInit, {
       headers: {
         "Content-Type": result.mimeType,
         "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(result.filename)}`,
+        // 对于二进制文件，确保正确的缓存控制
+        "Cache-Control": "no-cache",
       },
     })
   } catch (error) {

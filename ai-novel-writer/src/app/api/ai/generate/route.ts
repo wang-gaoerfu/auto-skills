@@ -72,6 +72,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ genres: getAllGenres() })
     }
 
+    if (action === "getMenus") {
+      const menuGenre = params.genre || "urbanReborn"
+      const menus = {
+        outline: getOutlineMenu(menuGenre),
+        chapter: getChapterMenu(menuGenre),
+        content: getContentMenu(menuGenre),
+      }
+      return NextResponse.json({ menus })
+    }
+
     if (action === "generateProjectSuggestions") {
       const result = await generateProjectSuggestions({
         genre: params.genre || "urbanReborn",
@@ -226,25 +236,6 @@ export async function POST(request: NextRequest) {
         })
         break
       }
-
-      case "getGenres":
-        return NextResponse.json({ genres: getAllGenres() })
-
-      case "getMenus":
-        const menuGenre = params.genre || "urbanReborn"
-        const menus = {
-          outline: getOutlineMenu(menuGenre),
-          chapter: getChapterMenu(menuGenre),
-          content: getContentMenu(menuGenre),
-        }
-        return NextResponse.json({ menus })
-
-      case "generateProjectSuggestions":
-        result = await generateProjectSuggestions({
-          genre: params.genre || "urbanReborn",
-          novelLength: params.novelLength || "medium",
-        })
-        break
 
       default:
         return NextResponse.json({ message: "未知操作" }, { status: 400 })

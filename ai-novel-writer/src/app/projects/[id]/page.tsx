@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +28,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   PenTool,
   Plus,
   BookOpen,
@@ -36,12 +45,19 @@ import {
   Loader2,
   Settings,
   Eye,
+  Download,
+  FileText,
+  FileDown,
+  BookMarked,
+  Users,
+  Database,
 } from "lucide-react"
 import { marked } from "marked"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
@@ -68,10 +84,18 @@ interface Project {
   membershipPlan: string
 }
 
+interface KnowledgeStats {
+  total: number
+  character: number
+  world: number
+  plot: number
+}
+
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const resolvedParams = use(params)
   const [project, setProject] = useState<Project | null>(null)
+  const [knowledgeStats, setKnowledgeStats] = useState<KnowledgeStats>({ total: 0, character: 0, world: 0, plot: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -84,15 +108,31 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [previewChapter, setPreviewChapter] = useState<Chapter | null>(null)
   const [previewHtml, setPreviewHtml] = useState("")
 
+  // 导出对话框状态
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [exportFormat, setExportFormat] = useState<"txt" | "markdown" | "html" | "docx" | "pdf">("txt")
+  const [exportIncludeMetadata, setExportIncludeMetadata] = useState(true)
+  const [exporting, setExporting] = useState(false)
+
   useEffect(() => {
     async function fetchProject() {
       try {
-        const res = await fetch(`/api/projects/${resolvedParams.id}`)
-        if (!res.ok) {
+        const [projectRes, knowledgeRes] = await Promise.all([
+          fetch(`/api/projects/${resolvedParams.id}`),
+          fetch(`/api/knowledge?projectId=${resolvedParams.id}`).catch(() => ({ json: () => ({ entries: [], stats: {} }) }))
+        ])
+
+        if (!projectRes.ok) {
           throw new Error("Failed to fetch project")
         }
-        const data = await res.json()
+        const data = await projectRes.json()
         setProject(data.project)
+
+        // 获取知识库统计
+        if (knowledgeRes.ok) {
+          const knowledgeData = await (knowledgeRes as Response).json()
+          setKnowledgeStats(knowledgeData.stats || { total: 0, character: 0, world: 0, plot: 0 })
+        }
       } catch (err) {
         console.error(err)
         setError("加载项目失败")
@@ -181,6 +221,32 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setShowDeleteChapterDialog(true)
   }
 
+  // 处理导出
+  const handleExport = async () => {
+    if (!project) return
+
+    setExporting(true)
+    try {
+      // 构建导出 URL
+      const exportUrl = `/api/projects/${resolvedParams.id}/export?format=${exportFormat}&includeMetadata=${exportIncludeMetadata}`
+
+      // 创建下载链接
+      const link = document.createElement("a")
+      link.href = exportUrl
+      link.download = ""
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      setExportDialogOpen(false)
+    } catch (error) {
+      console.error("Export error:", error)
+      alert("导出失败，请稍后重试")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -203,6 +269,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   }
 
   const chapters = project.chapters || []
+  const totalWords = chapters.reduce((sum, ch) => sum + ch.wordCount, 0)
 
   return (
     <div className="min-h-screen bg-background">
@@ -219,6 +286,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </Link>
           </div>
           <div className="flex items-center gap-2">
+            {/* 阅读按钮 */}
+            {chapters.length > 0 && (
+              <Link href={`/projects/${resolvedParams.id}/read`}>
+                <Button variant="outline" size="sm">
+                  <BookMarked className="h-4 w-4 mr-2" />
+                  阅读
+                </Button>
+              </Link>
+            )}
+
+            {/* 导出按钮 */}
+            {chapters.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setExportDialogOpen(true)}>
+                <Download className="h-4 w-4 mr-2" />
+                导出
+              </Button>
+            )}
+
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 w-9">
                 <MoreVertical className="h-5 w-5" />
@@ -228,6 +313,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   <Edit className="h-4 w-4 mr-2" />
                   编辑项目
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onSelect={(e) => {
@@ -327,6 +413,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             {project.description && (
               <p className="text-muted-foreground mt-2">{project.description}</p>
             )}
+            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+              <span>{chapters.length} 章节</span>
+              <span>·</span>
+              <span>{totalWords.toLocaleString()} 字</span>
+            </div>
           </div>
           <Badge variant="secondary">{project.membershipPlan}</Badge>
         </div>
@@ -334,7 +425,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-4 mb-8">
           <Link href={`/projects/${resolvedParams.id}/chapters/new`}>
-            <Card className="hover:border-primary cursor-pointer transition-all">
+            <Card className="hover:border-primary cursor-pointer transition-all h-full">
               <CardHeader>
                 <Plus className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle>添加章节</CardTitle>
@@ -342,14 +433,53 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </CardHeader>
             </Card>
           </Link>
-          <Card className="hover:border-primary cursor-pointer">
-            <CardHeader>
-              <BookOpen className="h-8 w-8 mb-2 text-primary" />
-              <CardTitle>知识库</CardTitle>
-              <CardDescription>人物和世界观</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="hover:border-primary cursor-pointer">
+
+          <Link href={`/knowledge?projectId=${resolvedParams.id}`}>
+            <Card className="hover:border-primary cursor-pointer transition-all h-full">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Database className="h-8 w-8 mb-2 text-primary" />
+                  {knowledgeStats.total > 0 && (
+                    <Badge variant="secondary" className="mb-2">{knowledgeStats.total}</Badge>
+                  )}
+                </div>
+                <CardTitle>知识库</CardTitle>
+                <CardDescription>
+                  {knowledgeStats.total > 0
+                    ? `${knowledgeStats.character} 人物 · ${knowledgeStats.world} 世界观 · ${knowledgeStats.plot} 剧情`
+                    : "人物和世界观设定"
+                  }
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          {chapters.length > 0 && (
+            <Link href={`/projects/${resolvedParams.id}/read`}>
+              <Card className="hover:border-primary cursor-pointer transition-all h-full">
+                <CardHeader>
+                  <BookMarked className="h-8 w-8 mb-2 text-primary" />
+                  <CardTitle>阅读小说</CardTitle>
+                  <CardDescription>连续阅读所有章节</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          )}
+
+          {chapters.length > 0 && (
+            <Card
+              className="hover:border-primary cursor-pointer transition-all h-full"
+              onClick={() => setExportDialogOpen(true)}
+            >
+              <CardHeader>
+                <FileDown className="h-8 w-8 mb-2 text-primary" />
+                <CardTitle>导出小说</CardTitle>
+                <CardDescription>TXT / Word / PDF</CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
+          <Card className="hover:border-primary cursor-pointer transition-all h-full opacity-50">
             <CardHeader>
               <Settings className="h-8 w-8 mb-2 text-primary" />
               <CardTitle>项目设置</CardTitle>
@@ -481,6 +611,98 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 编辑
               </Button>
             </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 导出对话框 */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileDown className="h-5 w-5" />
+              导出小说
+            </DialogTitle>
+            <DialogDescription>
+              选择导出格式和选项
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* 格式选择 */}
+            <div className="space-y-2">
+              <Label>导出格式</Label>
+              <Select
+                value={exportFormat}
+                onValueChange={(value) => setExportFormat(value as typeof exportFormat)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="txt">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      TXT 纯文本
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="markdown">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Markdown (.md)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="html">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      HTML 网页
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="docx">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Word 文档 (.docx)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="pdf">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      PDF 文档
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 选项 */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="includeMetadata"
+                checked={exportIncludeMetadata}
+                onCheckedChange={(checked) => setExportIncludeMetadata(checked as boolean)}
+              />
+              <Label htmlFor="includeMetadata" className="text-sm font-normal">
+                包含书名和简介
+              </Label>
+            </div>
+
+            {/* 导出信息 */}
+            <div className="p-3 bg-muted/50 rounded-md text-sm">
+              <p className="text-muted-foreground">
+                将导出 <span className="font-medium text-foreground">{chapters.length}</span> 个章节，
+                共 <span className="font-medium text-foreground">{totalWords.toLocaleString()}</span> 字
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleExport} disabled={exporting}>
+              {exporting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              开始导出
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

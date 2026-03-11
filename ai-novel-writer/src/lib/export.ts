@@ -1,7 +1,21 @@
 import { prisma } from "@/lib/prisma"
+import {
+  Document,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  Packer,
+  BorderStyle,
+} from "docx"
+import pdfMake from "pdfmake/build/pdfmake"
+import pdfFonts from "pdfmake/build/vfs_fonts"
+
+// 注册 pdfmake 字体
+pdfMake.vfs = pdfFonts.pdfMake.vfs
 
 // 导出格式类型
-export type ExportFormat = "txt" | "html" | "markdown"
+export type ExportFormat = "txt" | "html" | "markdown" | "docx" | "pdf"
 
 // 导出选项
 export interface ExportOptions {
@@ -94,11 +108,8 @@ function htmlToText(html: string): string {
   return text.trim()
 }
 
-// 导出项目为 TXT
-export async function exportToTxt(
-  projectId: string,
-  options: ExportOptions = { format: "txt" }
-): Promise<string> {
+// 获取项目数据
+async function getProjectData(projectId: string, options: ExportOptions) {
   const project = await prisma.project.findUnique({
     where: { id: projectId },
     include: {
@@ -119,6 +130,16 @@ export async function exportToTxt(
   if (!project) {
     throw new Error("项目不存在")
   }
+
+  return project
+}
+
+// 导出项目为 TXT
+export async function exportToTxt(
+  projectId: string,
+  options: ExportOptions = { format: "txt" }
+): Promise<string> {
+  const project = await getProjectData(projectId, options)
 
   let content = ""
 
@@ -151,26 +172,7 @@ export async function exportToMarkdown(
   projectId: string,
   options: ExportOptions = { format: "markdown" }
 ): Promise<string> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      chapters: {
-        orderBy: { order: "asc" },
-        where: options.chapterRange
-          ? {
-              order: {
-                gte: options.chapterRange.start,
-                lte: options.chapterRange.end,
-              },
-            }
-          : undefined,
-      },
-    },
-  })
-
-  if (!project) {
-    throw new Error("项目不存在")
-  }
+  const project = await getProjectData(projectId, options)
 
   let content = ""
 
@@ -203,26 +205,7 @@ export async function exportToHtml(
   projectId: string,
   options: ExportOptions = { format: "html" }
 ): Promise<string> {
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: {
-      chapters: {
-        orderBy: { order: "asc" },
-        where: options.chapterRange
-          ? {
-              order: {
-                gte: options.chapterRange.start,
-                lte: options.chapterRange.end,
-              },
-            }
-          : undefined,
-      },
-    },
-  })
-
-  if (!project) {
-    throw new Error("项目不存在")
-  }
+  const project = await getProjectData(projectId, options)
 
   let content = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -268,13 +251,223 @@ export async function exportToHtml(
   return content
 }
 
+// 导出项目为 Word (DOCX)
+export async function exportToDocx(
+  projectId: string,
+  options: ExportOptions = { format: "docx" }
+): Promise<Buffer> {
+  const project = await getProjectData(projectId, options)
+
+  const children: Paragraph[] = []
+
+  // 添加元数据
+  if (options.includeMetadata !== false) {
+    // 标题
+    children.push(
+      new Paragraph({
+        text: project.title,
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      })
+    )
+
+    // 简介
+    if (project.description) {
+      children.push(
+        new Paragraph({
+          text: project.description,
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 400 },
+        })
+      )
+    }
+
+    // 分隔线
+    children.push(
+      new Paragraph({
+        text: "─".repeat(50),
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 200, after: 400 },
+        border: {
+          bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+        },
+      })
+    )
+  }
+
+  // 添加章节
+  for (const chapter of project.chapters) {
+    // 章节标题
+    children.push(
+      new Paragraph({
+        text: `第${chapter.order}章 ${chapter.title}`,
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 },
+      })
+    )
+
+    // 章节内容 - 按段落分割
+    const chapterText = htmlToText(chapter.content || "")
+    const paragraphs = chapterText.split(/\n\n+/)
+
+    for (const para of paragraphs) {
+      if (para.trim()) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: para.trim(),
+                size: 24, // 12pt = 24 half-points
+              }),
+            ],
+            spacing: { after: 200 },
+            indent: { firstLine: 480 }, // 首行缩进 2 字符
+          })
+        )
+      }
+    }
+
+    // 章节结束分隔
+    children.push(
+      new Paragraph({
+        text: "",
+        spacing: { after: 400 },
+      })
+    )
+  }
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {},
+        children,
+      },
+    ],
+  })
+
+  return await Packer.toBuffer(doc)
+}
+
+// 导出项目为 PDF
+export async function exportToPdf(
+  projectId: string,
+  options: ExportOptions = { format: "pdf" }
+): Promise<Buffer> {
+  const project = await getProjectData(projectId, options)
+
+  const content: any[] = []
+
+  // 添加元数据
+  if (options.includeMetadata !== false) {
+    // 标题
+    content.push({
+      text: project.title,
+      style: "header",
+      alignment: "center",
+      margin: [0, 0, 0, 20],
+    })
+
+    // 简介
+    if (project.description) {
+      content.push({
+        text: project.description,
+        style: "subheader",
+        alignment: "center",
+        margin: [0, 0, 0, 30],
+      })
+    }
+
+    // 分隔线
+    content.push({
+      canvas: [
+        {
+          type: "line",
+          x1: 0,
+          y1: 0,
+          x2: 515,
+          y2: 0,
+          lineWidth: 1,
+          lineColor: "#cccccc",
+        },
+      ],
+      margin: [0, 0, 0, 30],
+    })
+  }
+
+  // 添加章节
+  for (const chapter of project.chapters) {
+    // 章节标题
+    content.push({
+      text: `第${chapter.order}章 ${chapter.title}`,
+      style: "chapterTitle",
+      margin: [0, 20, 0, 15],
+    })
+
+    // 章节内容
+    const chapterText = htmlToText(chapter.content || "")
+    const paragraphs = chapterText.split(/\n\n+/)
+
+    for (const para of paragraphs) {
+      if (para.trim()) {
+        content.push({
+          text: para.trim(),
+          style: "body",
+          margin: [0, 0, 0, 10],
+        })
+      }
+    }
+
+    // 章节分隔
+    content.push({
+      text: "",
+      margin: [0, 0, 0, 20],
+    })
+  }
+
+  // PDF 文档定义
+  const docDefinition: any = {
+    content,
+    styles: {
+      header: {
+        fontSize: 24,
+        bold: true,
+      },
+      subheader: {
+        fontSize: 12,
+        color: "#666666",
+      },
+      chapterTitle: {
+        fontSize: 16,
+        bold: true,
+      },
+      body: {
+        fontSize: 12,
+        lineHeight: 1.8,
+      },
+    },
+    defaultStyle: {
+      font: "Roboto", // pdfmake 默认字体，中文可能需要额外配置
+    },
+    pageSize: "A4",
+    pageMargins: [72, 72, 72, 72], // 1 inch margins
+  }
+
+  return new Promise((resolve, reject) => {
+    const pdfDocGenerator = pdfMake.createPdf(docDefinition)
+    pdfDocGenerator.getBuffer((buffer: Buffer) => {
+      resolve(buffer)
+    })
+  })
+}
+
 // 获取导出内容
 export async function exportProject(
   projectId: string,
   format: ExportFormat,
   options: ExportOptions = { format: "txt" }
-): Promise<{ content: string; filename: string; mimeType: string }> {
-  let content: string
+): Promise<{ content: string | Buffer; filename: string; mimeType: string }> {
+  let content: string | Buffer
   let filename: string
   let mimeType: string
 
@@ -305,6 +498,16 @@ export async function exportProject(
       content = await exportToHtml(projectId, options)
       filename = `${safeTitle}.html`
       mimeType = "text/html;charset=utf-8"
+      break
+    case "docx":
+      content = await exportToDocx(projectId, options)
+      filename = `${safeTitle}.docx`
+      mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      break
+    case "pdf":
+      content = await exportToPdf(projectId, options)
+      filename = `${safeTitle}.pdf`
+      mimeType = "application/pdf"
       break
     default:
       throw new Error(`不支持的导出格式: ${format}`)
