@@ -911,9 +911,6 @@ export async function generateGenreChapterContent(params: {
   relationships?: string
   plot?: string
   previousContent?: string
-  projectTitle?: string
-  projectDescription?: string
-  novelLength?: string
 }): Promise<string> {
   const config = getGenreConfig(params.genre)
   const template = config?.prompts.content || PROMPT_TEMPLATES.generateChapterContent
