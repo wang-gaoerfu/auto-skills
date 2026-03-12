@@ -97,7 +97,23 @@ export async function POST(request: NextRequest) {
     if (projectId && projectId !== "new") {
       project = await prisma.project.findFirst({
         where: { id: projectId, userId: session.user.id },
-        include: { chapters: { orderBy: { order: "asc" } } },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          outline: true,
+          novelLength: true,
+          chapters: {
+            orderBy: { order: "asc" },
+            select: {
+              id: true,
+              title: true,
+              content: true,
+              order: true,
+              wordCount: true,
+            },
+          },
+        },
       })
 
       if (!project) {

@@ -22,6 +22,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react"
+import { marked } from "marked"
 
 interface Chapter {
   id: string
@@ -106,11 +107,18 @@ export default function ReadPage({ params }: { params: Promise<{ id: string }> }
     if (project && project.chapters[currentChapterIndex]) {
       const chapter = project.chapters[currentChapterIndex]
 
-      // 处理内容：支持 HTML 和纯文本
+      // 处理内容：支持 Markdown、HTML 和纯文本
       let content = chapter.content || ""
 
-      // 如果是 HTML 内容，直接使用
-      if (content.includes("<")) {
+      // 优先检查 Markdown 标题语法（行首的 #）
+      const hasMarkdownHeadings = /^#{1,6}\s/m.test(content)
+      const hasMarkdownSyntax = content.includes("**") || content.includes("*") || content.includes("`")
+
+      if (hasMarkdownHeadings || hasMarkdownSyntax) {
+        // Markdown 内容，使用 marked 转换
+        content = marked.parse(content) as string
+      } else if (content.includes("<p") || content.includes("<div") || content.includes("<h")) {
+        // 已经是 HTML 内容，直接使用
         // 清理一些可能影响阅读的标签
         content = content
           .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
@@ -234,10 +242,8 @@ export default function ReadPage({ params }: { params: Promise<{ id: string }> }
 
             {/* 设置按钮 */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" title="阅读设置">
-                  <Settings className="h-4 w-4" />
-                </Button>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="sm" title="阅读设置" />}>
+                <Settings className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="p-4 space-y-4">
@@ -455,10 +461,29 @@ export default function ReadPage({ params }: { params: Promise<{ id: string }> }
           margin-bottom: 1em;
           text-indent: 2em;
         }
-        .read-content h1, .read-content h2, .read-content h3 {
+        .read-content h1 {
           text-indent: 0;
+          font-size: 1.75em;
+          font-weight: bold;
+          margin-top: 2em;
+          margin-bottom: 1em;
+          line-height: 1.3;
+        }
+        .read-content h2 {
+          text-indent: 0;
+          font-size: 1.5em;
+          font-weight: bold;
           margin-top: 1.5em;
+          margin-bottom: 0.75em;
+          line-height: 1.4;
+        }
+        .read-content h3 {
+          text-indent: 0;
+          font-size: 1.25em;
+          font-weight: bold;
+          margin-top: 1.25em;
           margin-bottom: 0.5em;
+          line-height: 1.4;
         }
         .read-content blockquote {
           border-left: 3px solid ${darkMode ? "#4B5563" : "#E5E7EB"};

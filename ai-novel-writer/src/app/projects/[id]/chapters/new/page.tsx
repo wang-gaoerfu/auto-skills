@@ -47,6 +47,8 @@ interface Project {
   title: string
   genre?: string
   outline: string | null
+  description?: string | null
+  novelLength?: string | null
 }
 
 interface KnowledgeEntry {

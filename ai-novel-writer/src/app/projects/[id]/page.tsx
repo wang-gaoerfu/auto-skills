@@ -129,8 +129,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         setProject(data.project)
 
         // 获取知识库统计
-        if (knowledgeRes.ok) {
-          const knowledgeData = await (knowledgeRes as Response).json()
+        if ('ok' in knowledgeRes && knowledgeRes.ok) {
+          const knowledgeData = await knowledgeRes.json()
           setKnowledgeStats(knowledgeData.stats || { total: 0, character: 0, world: 0, plot: 0 })
         }
       } catch (err) {
@@ -225,23 +225,64 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const handleExport = async () => {
     if (!project) return
 
+    // PDF 格式使用浏览器打印功能
+    if (exportFormat === "pdf") {
+      const exportUrl = `/api/projects/${resolvedParams.id}/export?format=html&includeMetadata=${exportIncludeMetadata}&print=1`
+      // 打开新窗口并自动打印
+      const printWindow = window.open(exportUrl, "_blank")
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print()
+        }
+      }
+      setExportDialogOpen(false)
+      return
+    }
+
     setExporting(true)
     try {
       // 构建导出 URL
       const exportUrl = `/api/projects/${resolvedParams.id}/export?format=${exportFormat}&includeMetadata=${exportIncludeMetadata}`
 
-      // 创建下载链接
+      // 使用 fetch 获取文件
+      const response = await fetch(exportUrl)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "导出失败" }))
+        throw new Error(errorData.message || "导出失败")
+      }
+
+      // 获取文件名从 Content-Disposition header
+      const contentDisposition = response.headers.get("Content-Disposition")
+      let filename = `${project.title}.${exportFormat === "markdown" ? "md" : exportFormat}`
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/)
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1])
+        } else {
+          const simpleMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+          if (simpleMatch) {
+            filename = simpleMatch[1]
+          }
+        }
+      }
+
+      // 创建 Blob 并下载
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
-      link.href = exportUrl
-      link.download = ""
+      link.href = url
+      link.download = filename
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
 
       setExportDialogOpen(false)
     } catch (error) {
       console.error("Export error:", error)
-      alert("导出失败，请稍后重试")
+      alert(error instanceof Error ? error.message : "导出失败，请稍后重试")
     } finally {
       setExporting(false)
     }
@@ -276,13 +317,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       {/* Header */}
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <Link href="/projects" className="flex items-center gap-2 hover:opacity-80">
+          <div className="flex items-center gap-3">
+            <Link href="/projects" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-5 w-5" />
+              <span className="text-sm">返回项目列表</span>
             </Link>
+            <span className="text-muted-foreground">|</span>
             <Link href="/dashboard" className="flex items-center gap-2">
-              <PenTool className="h-6 w-6" />
-              <span className="text-xl font-bold">AI小说创作能手</span>
+              <PenTool className="h-5 w-5" />
+              <span className="text-lg font-bold">AI小说创作能手</span>
             </Link>
           </div>
           <div className="flex items-center gap-2">
@@ -478,14 +521,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </CardHeader>
             </Card>
           )}
-
-          <Card className="hover:border-primary cursor-pointer transition-all h-full opacity-50">
-            <CardHeader>
-              <Settings className="h-8 w-8 mb-2 text-primary" />
-              <CardTitle>项目设置</CardTitle>
-              <CardDescription>提示词和模型配置</CardDescription>
-            </CardHeader>
-          </Card>
         </div>
 
         <Separator className="my-8" />
@@ -636,42 +671,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 value={exportFormat}
                 onValueChange={(value) => setExportFormat(value as typeof exportFormat)}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="选择格式">
+                    {exportFormat === "txt" && "TXT 纯文本"}
+                    {exportFormat === "markdown" && "Markdown (.md)"}
+                    {exportFormat === "html" && "HTML 网页"}
+                    {exportFormat === "docx" && "Word 文档 (.docx)"}
+                    {exportFormat === "pdf" && "PDF 文档"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="txt">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      TXT 纯文本
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="markdown">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Markdown (.md)
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="html">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      HTML 网页
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="docx">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Word 文档 (.docx)
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="pdf">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      PDF 文档
-                    </div>
-                  </SelectItem>
+                  <SelectItem value="txt">TXT 纯文本</SelectItem>
+                  <SelectItem value="markdown">Markdown (.md)</SelectItem>
+                  <SelectItem value="html">HTML 网页</SelectItem>
+                  <SelectItem value="docx">Word 文档 (.docx)</SelectItem>
+                  <SelectItem value="pdf">PDF 文档</SelectItem>
                 </SelectContent>
               </Select>
+              {exportFormat === "pdf" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  将打开打印预览窗口，请使用"另存为 PDF"保存
+                </p>
+              )}
             </div>
 
             {/* 选项 */}

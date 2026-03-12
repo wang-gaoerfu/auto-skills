@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { marked } from "marked"
 import {
   Document,
   Paragraph,
@@ -8,11 +9,8 @@ import {
   Packer,
   BorderStyle,
 } from "docx"
-import pdfMake from "pdfmake/build/pdfmake"
-import pdfFonts from "pdfmake/build/vfs_fonts"
-
-// 注册 pdfmake 字体
-pdfMake.vfs = pdfFonts.pdfMake.vfs
+import { readFileSync, existsSync } from "fs"
+import { join } from "path"
 
 // 导出格式类型
 export type ExportFormat = "txt" | "html" | "markdown" | "docx" | "pdf"
@@ -21,6 +19,7 @@ export type ExportFormat = "txt" | "html" | "markdown" | "docx" | "pdf"
 export interface ExportOptions {
   format: ExportFormat
   includeMetadata?: boolean // 包含标题、简介等
+  printMode?: boolean // 打印模式（用于 PDF 导出）
   chapterRange?: {
     start: number
     end: number
@@ -207,6 +206,25 @@ export async function exportToHtml(
 ): Promise<string> {
   const project = await getProjectData(projectId, options)
 
+  const printStyles = options.printMode ? `
+    @media print {
+      body { padding: 0; max-width: none; }
+      h2 { page-break-before: always; margin-top: 0; }
+      article { page-break-inside: avoid; }
+      hr { display: none; }
+      .no-print { display: none; }
+    }
+    @page {
+      size: A4;
+      margin: 2cm;
+    }
+    body {
+      font-family: "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "SimSun", sans-serif;
+      font-size: 12pt;
+      line-height: 1.8;
+    }
+    ` : ""
+
   let content = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -215,16 +233,20 @@ export async function exportToHtml(
   <title>${project.title}</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
       line-height: 1.8;
+      color: #333;
     }
-    h1 { text-align: center; }
-    h2 { border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-    blockquote { border-left: 3px solid #ccc; padding-left: 15px; color: #666; }
+    h1 { text-align: center; margin-bottom: 20px; }
+    h2 { border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-top: 40px; }
+    p { text-indent: 2em; margin: 1em 0; }
+    blockquote { border-left: 3px solid #ccc; padding-left: 15px; color: #666; margin: 1em 0; }
     hr { border: none; border-top: 1px solid #eee; margin: 30px 0; }
+    article { margin: 20px 0; }
+    ${printStyles}
   </style>
 </head>
 <body>
@@ -234,7 +256,7 @@ export async function exportToHtml(
   if (options.includeMetadata !== false) {
     content += `<h1>${project.title}</h1>\n`
     if (project.description) {
-      content += `<p style="text-align: center; color: #666;">${project.description}</p>\n`
+      content += `<p style="text-align: center; color: #666; text-indent: 0;">${project.description}</p>\n`
     }
     content += `<hr>\n`
   }
@@ -242,7 +264,29 @@ export async function exportToHtml(
   // 添加章节
   for (const chapter of project.chapters) {
     content += `<h2>第${chapter.order}章 ${chapter.title}</h2>\n`
-    content += `<article>${chapter.content || ""}</article>\n`
+
+    // 处理章节内容
+    let chapterContent = chapter.content || ""
+
+    // 检查是否是 markdown 格式（以 # 开头或有 ** * 等标记）
+    const hasMarkdownSyntax = /^#{1,6}\s/m.test(chapterContent) ||
+                               chapterContent.includes("**") ||
+                               chapterContent.includes("*") ||
+                               chapterContent.includes("`")
+
+    if (hasMarkdownSyntax) {
+      // Markdown 内容，使用 marked 转换
+      chapterContent = await marked.parse(chapterContent) as string
+    } else if (!chapterContent.includes("<p") && !chapterContent.includes("<div")) {
+      // 纯文本内容，转换为段落
+      chapterContent = chapterContent
+        .split(/\n\n+/)
+        .filter(p => p.trim())
+        .map(p => `<p>${p.trim().replace(/\n/g, "<br>")}</p>`)
+        .join("\n")
+    }
+
+    content += `<article>${chapterContent}</article>\n`
     content += `<hr>\n`
   }
 
@@ -349,116 +393,161 @@ export async function exportToDocx(
   return await Packer.toBuffer(doc)
 }
 
-// 导出项目为 PDF
+// 导出项目为 PDF（使用 pdf-lib 库 + 中文字体）
 export async function exportToPdf(
   projectId: string,
   options: ExportOptions = { format: "pdf" }
 ): Promise<Buffer> {
+  const { PDFDocument, rgb } = await import("pdf-lib")
+
   const project = await getProjectData(projectId, options)
 
-  const content: any[] = []
+  // 创建 PDF 文档
+  const pdfDoc = await PDFDocument.create()
+
+  // 尝试加载中文字体
+  let font: any = null
+  const fontPaths = [
+    join(process.cwd(), "src/lib/fonts/NotoSansSC-Regular.ttf"),
+    join(process.cwd(), "src/lib/fonts/NotoSansSC-Regular.otf"),
+    join(process.cwd(), "public/fonts/NotoSansSC-Regular.ttf"),
+  ]
+
+  for (const fontPath of fontPaths) {
+    if (existsSync(fontPath)) {
+      try {
+        const fontBytes = readFileSync(fontPath)
+        font = pdfDoc.embedFont(fontBytes, { subset: true })
+        console.log("[PDF Export] Font loaded successfully from:", fontPath)
+        break
+      } catch (e) {
+        console.log("[PDF Export] Failed to load font from:", fontPath, e)
+      }
+    }
+  }
+
+  if (!font) {
+    // 如果没有中文字体，返回一个提示 HTML 让用户在浏览器中打印
+    console.log("[PDF Export] No Chinese font found, generating HTML for browser print")
+    throw new Error("PDF 导出需要中文字体支持。请使用 HTML 格式导出，然后在浏览器中按 Ctrl+P 打印为 PDF。")
+  }
 
   // 添加元数据
   if (options.includeMetadata !== false) {
+    const titlePage = pdfDoc.addPage([595.28, 841.89]) // A4
+    const { width, height } = titlePage.getSize()
+
     // 标题
-    content.push({
-      text: project.title,
-      style: "header",
-      alignment: "center",
-      margin: [0, 0, 0, 20],
+    titlePage.drawText(project.title, {
+      x: 50,
+      y: height - 100,
+      size: 24,
+      font,
+      color: rgb(0, 0, 0),
     })
 
     // 简介
     if (project.description) {
-      content.push({
-        text: project.description,
-        style: "subheader",
-        alignment: "center",
-        margin: [0, 0, 0, 30],
-      })
+      // 简介可能很长，需要分行
+      const descLines = wrapText(project.description, font, 12, width - 100)
+      let descY = height - 140
+      for (const line of descLines) {
+        titlePage.drawText(line, {
+          x: 50,
+          y: descY,
+          size: 12,
+          font,
+          color: rgb(0.4, 0.4, 0.4),
+        })
+        descY -= 18
+      }
     }
-
-    // 分隔线
-    content.push({
-      canvas: [
-        {
-          type: "line",
-          x1: 0,
-          y1: 0,
-          x2: 515,
-          y2: 0,
-          lineWidth: 1,
-          lineColor: "#cccccc",
-        },
-      ],
-      margin: [0, 0, 0, 30],
-    })
   }
 
   // 添加章节
   for (const chapter of project.chapters) {
+    const page = pdfDoc.addPage([595.28, 841.89]) // A4
+    const { width, height } = page.getSize()
+
     // 章节标题
-    content.push({
-      text: `第${chapter.order}章 ${chapter.title}`,
-      style: "chapterTitle",
-      margin: [0, 20, 0, 15],
+    const chapterTitle = `第${chapter.order}章 ${chapter.title}`
+    page.drawText(chapterTitle, {
+      x: 50,
+      y: height - 50,
+      size: 16,
+      font,
+      color: rgb(0, 0, 0),
     })
 
     // 章节内容
     const chapterText = htmlToText(chapter.content || "")
-    const paragraphs = chapterText.split(/\n\n+/)
 
-    for (const para of paragraphs) {
-      if (para.trim()) {
-        content.push({
-          text: para.trim(),
-          style: "body",
-          margin: [0, 0, 0, 10],
+    // 文字换行处理
+    const paragraphs = chapterText.split("\n\n")
+    let currentY = height - 100
+    let currentPage = page
+
+    for (const paragraph of paragraphs) {
+      if (!paragraph.trim()) continue
+
+      const lines = wrapText(paragraph.trim(), font, 12, width - 100)
+
+      for (const line of lines) {
+        if (currentY < 50) {
+          // 需要新页面
+          currentPage = pdfDoc.addPage([595.28, 841.89])
+          currentY = currentPage.getSize().height - 50
+        }
+
+        currentPage.drawText(line, {
+          x: 50,
+          y: currentY,
+          size: 12,
+          font,
+          color: rgb(0, 0, 0),
         })
+        currentY -= 20
       }
+
+      // 段落间距
+      currentY -= 10
     }
-
-    // 章节分隔
-    content.push({
-      text: "",
-      margin: [0, 0, 0, 20],
-    })
   }
 
-  // PDF 文档定义
-  const docDefinition: any = {
-    content,
-    styles: {
-      header: {
-        fontSize: 24,
-        bold: true,
-      },
-      subheader: {
-        fontSize: 12,
-        color: "#666666",
-      },
-      chapterTitle: {
-        fontSize: 16,
-        bold: true,
-      },
-      body: {
-        fontSize: 12,
-        lineHeight: 1.8,
-      },
-    },
-    defaultStyle: {
-      font: "Roboto", // pdfmake 默认字体，中文可能需要额外配置
-    },
-    pageSize: "A4",
-    pageMargins: [72, 72, 72, 72], // 1 inch margins
+  // 保存 PDF
+  const pdfBytes = await pdfDoc.save()
+  console.log("[PDF Export] PDF created, size:", pdfBytes.length)
+
+  return Buffer.from(pdfBytes)
+}
+
+// 文字换行辅助函数
+function wrapText(text: string, font: any, fontSize: number, maxWidth: number): string[] {
+  const lines: string[] = []
+  const chars = text.split("")
+  let currentLine = ""
+
+  for (const char of chars) {
+    const testLine = currentLine + char
+    try {
+      const width = font.widthOfTextAtSize(testLine, fontSize)
+      if (width > maxWidth && currentLine.length > 0) {
+        lines.push(currentLine)
+        currentLine = char
+      } else {
+        currentLine = testLine
+      }
+    } catch {
+      // 如果字符无法测量，直接添加
+      currentLine = testLine
+    }
   }
 
-  return new Promise((resolve, reject) => {
-    const pdfDocGenerator = pdfMake.createPdf(docDefinition)
-    pdfDocGenerator.getBuffer((buffer: Buffer) => {
-      resolve(buffer)
-    })
-  })
+  if (currentLine.length > 0) {
+    lines.push(currentLine)
+  }
+
+  return lines.length > 0 ? lines : [text]
 }
 
 // 获取导出内容
