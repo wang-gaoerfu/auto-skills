@@ -313,8 +313,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       total: data.totalRequested,
                       message: data.message,
                     })
-                    // 刷新页面
-                    setTimeout(() => {
+                    // 刷新项目数据以显示新章节
+                    setTimeout(async () => {
+                      await refreshProjectData()
+                      // 如果是完结模式且全部生成成功，自动标记为完结
+                      if (isEndingMode && data.generatedCount === data.totalRequested) {
+                        await updateProjectStatus("completed")
+                      }
                       router.refresh()
                       setCompletionDialogOpen(false)
                     }, 1000)
@@ -347,6 +352,29 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const openCompletionDialog = () => {
     setCompletionDialogOpen(true)
     fetchCompletionAnalysis()
+  }
+
+  // 刷新项目数据（包含章节列表）
+  const refreshProjectData = async () => {
+    try {
+      const [projectRes, knowledgeRes] = await Promise.all([
+        fetch(`/api/projects/${resolvedParams.id}`),
+        fetch(`/api/knowledge?projectId=${resolvedParams.id}`).catch(() => ({ json: () => ({ entries: [], stats: {} }) }))
+      ])
+
+      if (projectRes.ok) {
+        const data = await projectRes.json()
+        setProject(data.project)
+      }
+
+      // 获取知识库统计
+      if ('ok' in knowledgeRes && knowledgeRes.ok) {
+        const knowledgeData = await knowledgeRes.json()
+        setKnowledgeStats(knowledgeData.stats || { total: 0, character: 0, world: 0, plot: 0 })
+      }
+    } catch (err) {
+      console.error("Failed to refresh project:", err)
+    }
   }
 
   useEffect(() => {

@@ -146,7 +146,9 @@ export async function POST(
             return `第${ch.order}章《${ch.title}》：${contentPreview}...`
           }).join("\n\n")
 
-          const endingPrompt = `你是一位资深小说编辑。现在需要为一部${project.genre || "都市"}题材的小说规划结局。
+          const endingPrompt = `你是一位资深小说编辑。现在需要为一部${project.genre || "都市"}题材的小说规划一个完整的结局。
+
+【重要】这是小说的最后${chaptersToGenerate}章，写完后小说将正式完结！
 
 小说标题：${project.title}
 小说简介：${project.description || "暂无"}
@@ -159,21 +161,38 @@ ${chapterSummaries}
 主要角色：
 ${characters || "暂无"}
 
-请为这${chaptersToGenerate}章规划一个合理的结局大纲，包括：
-1. 每章的标题和主要内容
-2. 如何收束主要故事线
-3. 最后一章的结局设计（大结局/尾声）
+【结局规划要求】
+1. 这${chaptersToGenerate}章必须是小说的最终章节，写完后故事必须彻底完结
+2. 最后一章必须包含"大结局"或"尾声"字样
+3. 所有主要故事线必须在这一批章节中得到收束
+4. 主角的命运必须有明确交代（成功/失败/成长等）
+5. 不能留下悬念或伏笔，不能有"未完待续"的感觉
+6. 给读者一个情感上的满足感
 
-请用简洁的中文输出，格式如下：
-第${currentChapterCount + 1}章：[标题] - [主要内容概要]
-第${currentChapterCount + 2}章：[标题] - [主要内容概要]
+请为这${chaptersToGenerate}章规划详细的结局大纲，格式如下：
+
+【结局规划】
+第${currentChapterCount + 1}章《章节标题》：
+- 本章任务：[从当前状态过渡到结局的开始]
+- 主要内容：[具体情节]
+- 故事线收束：[哪些故事线开始收尾]
+
+第${currentChapterCount + 2}章《章节标题》：
+- 本章任务：[推进结局]
+- 主要内容：[具体情节]
+- 故事线收束：[继续收束]
+
 ...
-第${currentChapterCount + chaptersToGenerate}章（大结局）：[标题] - [结局内容概要]`
+
+第${currentChapterCount + chaptersToGenerate}章《章节标题（大结局/尾声）》：
+- 本章任务：[最终收束所有故事线，完成结局]
+- 主要内容：[包含明确的结局场景，主角命运的最终交代]
+- 完结标志：[大团圆/悲剧/开放式但明确的结局]`
 
           try {
             endingOutline = await generateText({
               prompt: endingPrompt,
-              maxTokens: 1500,
+              maxTokens: 2000,
               temperature: 0.7,
             })
             send({ type: "outline", outline: endingOutline })
@@ -218,13 +237,46 @@ ${characters || "暂无"}
 
             // 如果是完结模式，结合结局规划
             if (isEndingMode && endingOutline) {
-              chapterOutline = `【完结章节规划】
-${endingOutline.split("\n").find(line => line.includes(`第${chapterOrder}章`)) || ""}
+              // 从结局规划中提取当前章节的规划
+              const currentChapterPlan = endingOutline.split("\n").find(line => line.includes(`第${chapterOrder}章`)) || ""
+
+              if (isLastChapter) {
+                // 最后一章的强化提示
+                chapterOutline = `【重要：这是小说的大结局章节】
+
+${currentChapterPlan}
 
 【本章详细大纲】
 ${chapterOutline}
 
-${isLastChapter ? "【重要提示】这是小说的最后一章（大结局），请确保：\n1. 所有主要故事线得到收束\n2. 主角的命运有明确交代\n3. 给读者一个满意的结局\n4. 可以包含尾声或后记元素" : "【提示】这是完结前的过渡章节，要为最终结局做铺垫。"}`
+【大结局写作要求 - 必须严格遵守】
+1. 这是小说的最后一章，标题必须包含"大结局"或"尾声"
+2. 所有故事线必须在本章彻底完结，不能留下任何悬念
+3. 主角的最终命运必须明确交代（成功/失败/成长/蜕变等）
+4. 必须有一个完整的结局场景（决战/婚礼/葬礼/重逢/离别等）
+5. 给读者情感上的满足感和完结感
+6. 可以添加"尾声"或"后记"交代角色后续
+7. 结尾要有力量感，让读者感受到故事真正结束了
+
+【禁止事项】
+- 簡不能留下"未完待续"或悬念
+- 不能引入新的冲突或伏笔
+- 不能让读者感觉故事还没讲完`
+              } else {
+                // 过渡章节的提示
+                chapterOutline = `【完结过渡章节】
+
+${currentChapterPlan}
+
+【本章详细大纲】
+${chapterOutline}
+
+【过渡章节要求】
+1. 这是通往大结局的过渡章节
+2. 要为最终结局做铺垫
+3. 开始收束故事线
+4. 解决部分悬念，为最终结局做准备`
+              }
             }
 
             // 2. 获取前一章内容
