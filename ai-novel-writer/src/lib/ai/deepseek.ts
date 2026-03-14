@@ -1,10 +1,15 @@
 import OpenAI from "openai"
 
-// DeepSeek 配置
+// DeepSeek 配置 - 根据运行环境动态配置
+const isServer = typeof window === "undefined"
+
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY || "",
   baseURL: "https://api.deepseek.com",
-  dangerouslyAllowBrowser: true,
+  // 设置较长的超时时间（2分钟）
+  timeout: 120000,
+  // 仅在浏览器端需要此选项，服务端不需要
+  ...(isServer ? {} : { dangerouslyAllowBrowser: true }),
 })
 
 export interface GenerateOptions {
@@ -30,6 +35,8 @@ export async function generateText(options: GenerateOptions): Promise<string> {
   } = options
 
   try {
+    console.log("[DeepSeek] Generating text, prompt length:", prompt.length)
+
     const response = await client.chat.completions.create({
     model: "deepseek-chat",
     messages: [
@@ -40,9 +47,23 @@ export async function generateText(options: GenerateOptions): Promise<string> {
     max_tokens: maxTokens,
   })
 
-    return response.choices[0]?.message?.content || ""
-  } catch (error) {
-    console.error("DeepSeek generate error:", error)
+    const content = response.choices[0]?.message?.content || ""
+    console.log("[DeepSeek] Generated text length:", content.length)
+    return content
+  } catch (error: any) {
+    console.error("[DeepSeek] Generate error:", {
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+    })
+    // 重新抛出带有更详细信息的错误
+    if (error?.status === 401) {
+      throw new Error("DeepSeek API密钥无效，请检查配置")
+    } else if (error?.status === 429) {
+      throw new Error("DeepSeek API请求过于频繁，请稍后重试")
+    } else if (error?.code === "ETIMEDOUT" || error?.code === "ECONNREFUSED") {
+      throw new Error("DeepSeek API连接超时，请检查网络")
+    }
     throw error
   }
 }
@@ -110,19 +131,32 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计感情与事业双线发展
 4.突出商战与情感冲突
 5.体现重生者的成长蜕变`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.职场布局与人脉积累
 2.感情线索的推进方式
 3.具体商业机遇把握
 4.敌我力量对比变化
 5.个人成长的关键节点`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `【重要】你正在为小说的章节《{{chapterTitle}}》创作正文内容。请确保你生成的内容是针对这个特定章节的，不要生成其他章节的内容。
+
+基于以下信息创作：
+- 章节标题：{{chapterTitle}}
+- 章节大纲：{{chapterOutline}}
+- 背景设定：{{background}}
+- 人物设定：{{characters}}
+- 关系设定：{{relationships}}
+- 剧情设定：{{plot}}
+- 前文内容：{{previousContent}}
+
+写作要求：
 1.商战细节要专业
 2.感情描写要细腻
 3.对话要凸显身份
 4.场景要突出格调
-5.节奏要张弛有度`
+5.节奏要张弛有度
+
+注意：标题必须是"{{chapterTitle}}"，不要写成其他章节的标题。`
     },
     outlineMenu: [
       { name: "深化冲突", prompt: "基于背景：{{background}}\n人物：{{characters}}\n在保持合理性的前提下，将以下内容的冲突升级，制造更强的戏剧性：{{selected_text}}" },
@@ -148,19 +182,32 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计反转与逆转
 4.突出脑洞创意性
 5.体现故事魔幻感`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.创意点的展现
 2.逻辑的自洽性
 3.反转的设计感
 4.人物的特异性
 5.世界的新奇感`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `【重要】你正在为小说的章节《{{chapterTitle}}》创作正文内容。请确保你生成的内容是针对这个特定章节的，不要生成其他章节的内容。
+
+基于以下信息创作：
+- 章节标题：{{chapterTitle}}
+- 章节大纲：{{chapterOutline}}
+- 背景设定：{{background}}
+- 人物设定：{{characters}}
+- 关系设定：{{relationships}}
+- 剧情设定：{{plot}}
+- 前文内容：{{previousContent}}
+
+写作要求：
 1.创意要出人意料
 2.逻辑要自圆其说
 3.画面要奇幻独特
 4.细节要异想天开
-5.节奏要跌宕起伏`
+5.节奏要跌宕起伏
+
+注意：标题必须是"{{chapterTitle}}"，不要写成其他章节的标题。`
     },
     outlineMenu: [
       { name: "设定解密", prompt: "在{{selected_text}}中揭示一个惊人的世界设定" },
@@ -186,19 +233,32 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计修仙与都市双线
 4.突出正邪势力冲突
 5.体现主角的道心成长`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.修炼进境的关键
 2.仙凡矛盾的处理
 3.机缘造化的把握
 4.敌我实力的变化
 5.道心历练的体现`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `【重要】你正在为小说的章节《{{chapterTitle}}》创作正文内容。请确保你生成的内容是针对这个特定章节的，不要生成其他章节的内容。
+
+基于以下信息创作：
+- 章节标题：{{chapterTitle}}
+- 章节大纲：{{chapterOutline}}
+- 背景设定：{{background}}
+- 人物设定：{{characters}}
+- 关系设定：{{relationships}}
+- 剧情设定：{{plot}}
+- 前文内容：{{previousContent}}
+
+写作要求：
 1.修炼描写要专业
 2.战斗场面要震撼
 3.仙凡转换要自然
 4.格调要玄妙雅致
-5.节奏要紧张有序`
+5.节奏要紧张有序
+
+注意：标题必须是"{{chapterTitle}}"，不要写成其他章节的标题。`
     },
     outlineMenu: [
       { name: "深化修炼", prompt: "基于修炼体系：{{background}}\n在{{selected_text}}中加入一场关键的修炼突破" },
@@ -224,19 +284,32 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计武道与都市双线
 4.突出武者间的较量
 5.体现主角的武道成长`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.武学技巧展现
 2.实力等级划分
 3.格斗竞技安排
 4.武道资源获取
 5.江湖势力交织`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `【重要】你正在为小说的章节《{{chapterTitle}}》创作正文内容。请确保你生成的内容是针对这个特定章节的，不要生成其他章节的内容。
+
+基于以下信息创作：
+- 章节标题： {{chapterTitle}}
+- 章节大纲: {{chapterOutline}}
+- 背景设定: {{background}}
+- 人物设定: {{characters}}
+- 关系设定: {{relationships}}
+- 像情设定: {{plot}}
+- 嚷文内容: {{previousContent}}
+
+写作要求：
 1.武学描写要专业
 2.打斗场面要精彩
 3.武道元素要现代
 4.场景要动感震撼
-5.节奏要紧张刺激`
+5.节奏要紧张刺激
+
+注意：标题必须是"{{chapterTitle}}"，不要写成其他章节的标题。`
     },
     outlineMenu: [
       { name: "武道突破", prompt: "在{{selected_text}}中加入一场关键的武道突破" },
@@ -262,14 +335,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计系统与生存双线
 4.突出危机与进化
 5.体现主角的成长蜕变`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.系统任务完成
 2.生存资源获取
 3.危机处理方式
 4.进化路线选择
 5.团队合作发展`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.末日氛围要真实
 2.系统操作要合理
 3.生存细节要专业
@@ -300,14 +375,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计系统与修真双线
 4.突出玄幻与仙道结合
 5.体现主角的修炼成长`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.系统辅助修炼
 2.玄幻世界探索
 3.修真资源获取
 4.势力关系处理
 5.修为境界提升`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.系统功能要新颖
 2.修炼描写要专业
 3.玄幻元素要独特
@@ -338,14 +415,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计权势与爱情双线
 4.突出豪门恩怨纠葛
 5.体现霸道总裁的成长`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.商业布局的关键
 2.感情纠葛的推进
 3.权力较量的升级
 4.家族势力的变化
 5.个人成长的体现`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.商战描写要霸气
 2.感情描写要强势
 3.对话要凸显身份
@@ -376,14 +455,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计愧疚与弥补双线
 4.突出情感打动人心
 5.体现人物的救赎成长`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.情感创伤的根源
 2.愧疚心理的体现
 3.挽回行动的展开
 4.心理状态的变化
 5.救赎之路的探索`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.心理描写要细腻
 2.情感冲突要真挚
 3.对话要饱含深意
@@ -414,14 +495,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计碾压与成长双线
 4.突出主角的无敌姿态
 5.体现霸绝天下的气概`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.实力提升方式
 2.碾压对手过程
 3.底牌释放时机
 4.强者之路展现
 5.无敌气质塑造`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.战斗描写要震撼
 2.实力展现要惊艳
 3.对话要霸气十足
@@ -452,14 +535,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计权谋与变革双线
 4.突出历史事件改写
 5.体现时代变迁特色`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.历史背景还原
 2.政治博弈展开
 3.军事战略运用
 4.民生变革实施
 5.历史走向改变`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.历史细节要考究
 2.权谋描写要精妙
 3.对话要符合时代
@@ -490,14 +575,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计种植与经营双线
 4.突出田园生活情趣
 5.体现产业化发展`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.种植技术运用
 2.产业链打造
 3.市场运营拓展
 4.人际网络建设
 5.田园生活展现`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.农业知识要专业
 2.经营手法要新颖
 3.生活气息要浓厚
@@ -528,14 +615,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计问道与争锋双线
 4.突出东方文化底蕴
 5.体现天道大势变化`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.修炼体系展现
 2.东方元素融入
 3.势力格局变化
 4.天地大道感悟
 5.仙凡格局演变`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.玄幻元素要东方
 2.战斗场景要磅礴
 3.文化底蕴要深厚
@@ -566,14 +655,16 @@ export const GENRE_CONFIGS: Record<string, GenreConfig> = {
 3.设计经营与竞争双线
 4.突出策略性决策
 5.体现企业化发展`,
-      chapter: `基于大纲{{outline}}，将以下章节细化：
+      chapter: `基于大纲{{outline}}，将章节《{{chapterTitle}}》细化：
 重点规划：
 1.经营策略制定
 2.资源调配优化
 3.市场竞争应对
 4.团队建设管理
 5.危机处理方案`,
-      content: `基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}，展开本章节创作。要求：
+      content: `请为章节《{{chapterTitle}}》创作正文内容。
+基于：背景{{background}}、人物{{characters}}、关系{{relationships}}、情节{{plot}}、章节大纲{{chapterOutline}}
+要求：
 1.经营细节要专业
 2.策略运用要精妙
 3.决策过程要理性
@@ -915,7 +1006,14 @@ export async function generateGenreChapterContent(params: {
   const config = getGenreConfig(params.genre)
   const template = config?.prompts.content || PROMPT_TEMPLATES.generateChapterContent
 
-  const prompt = replaceVariables(template, {
+  console.log("[DeepSeek] generateGenreChapterContent called:", {
+    genre: params.genre,
+    chapterTitle: params.chapterTitle,
+    hasConfig: !!config,
+    templateLength: template.length,
+  })
+
+  let prompt = replaceVariables(template, {
     chapterTitle: params.chapterTitle,
     chapterOutline: params.chapterOutline || "",
     characters: params.characters || "",
@@ -928,6 +1026,31 @@ export async function generateGenreChapterContent(params: {
     description: params.projectDescription || "",
     novelLength: params.novelLength || "medium"
   })
+
+  // 添加额外的章节标题强调，确保 AI 生成正确章节的内容
+  const chapterTitle = params.chapterTitle || "未命名章节"
+
+  // 确保章节标题格式正确【第X章 XXXX】
+  const titleFormatGuidance = `
+【章节标题格式要求】
+- 正文第一行必须是章节标题，格式为：# ${chapterTitle}
+- 如果章节标题不包含【第X章】，请自动添加，例如：# 【第X章 章节名称】
+- 标题要简洁有力，能概括本章内容
+`
+
+  prompt = `【关键要求】你现在正在为小说的"${chapterTitle}"创作正文内容。
+请务必确保：
+1. 你生成的内容是针对"${chapterTitle}"这个特定章节的
+2. 正文第一行必须是 Markdown 格式的标题：# ${chapterTitle}
+3. 如果标题格式不是【第X章 XXXX】，请调整为这种格式
+4. 内容要符合这个章节的剧情发展
+${titleFormatGuidance}
+---
+
+${prompt}`
+
+  console.log("[DeepSeek] Prompt length:", prompt.length)
+  console.log("[DeepSeek] Chapter title being generated:", chapterTitle)
 
   return generateText({
     prompt,
@@ -1161,6 +1284,21 @@ export async function generateChapterContent(params: {
   projectDescription?: string
   novelLength?: string
 }): Promise<string> {
+  // 章节标题格式指导
+  const titleFormatGuidance = `
+【章节标题格式要求】
+- 正文第一行必须是 Markdown 格式的标题
+- 标题格式应为：# ${params.chapterTitle}
+- 如果标题不包含【第X章】，请自动添加，例如：# 【第X章 章节名称】
+- 标题要简洁有力，能概括本章内容
+`
+
+  const enhancedPrompt = `${titleFormatGuidance}
+
+---
+
+`
+
   const prompt = replaceVariables(PROMPT_TEMPLATES.generateChapterContent, {
     chapterTitle: params.chapterTitle,
     chapterOutline: params.chapterOutline || "",
@@ -1171,8 +1309,9 @@ export async function generateChapterContent(params: {
     description: params.projectDescription || "",
     novelLength: params.novelLength || "medium",
   })
+
   return generateText({
-    prompt,
+    prompt: enhancedPrompt + prompt,
     temperature: 0.85,
     maxTokens: 4000,
   })
@@ -1277,4 +1416,202 @@ export async function generateProjectSuggestions(params: {
     temperature: 0.9,
     maxTokens: 2000,
   })
+}
+
+// ============================================
+// 完结检测分析
+// ============================================
+
+// 完结分析结果接口
+export interface CompletionAnalysis {
+  isCompletable: boolean      // 是否可以完结
+  completionScore: number     // 完结度评分 0-100
+  analysis: {
+    wordCountStatus: string   // 字数状态描述
+    chapterStatus: string     // 章节状态描述
+    storyEnding: string       // 故事结局分析
+    suggestions: string[]     // 建议
+  }
+  lastChapterSignals: {
+    hasEndingKeywords: boolean  // 是否有结局关键词
+    hasEpilogue: boolean        // 是否有尾声/后记
+    conflictResolved: boolean   // 主要冲突是否解决
+  }
+}
+
+// 分析小说是否达到完结条件
+export async function analyzeCompletion(params: {
+  title: string
+  description?: string | null
+  genre?: string | null
+  novelLength?: string | null
+  currentWordCount: number
+  currentChapterCount: number
+  lastChapterTitle?: string
+  lastChapterContent?: string
+  targetWords?: number | null
+  targetChapters?: number | null
+}): Promise<CompletionAnalysis> {
+  const lengthConfig = NOVEL_LENGTH_CONFIG[params.novelLength || "medium"]
+
+  // 解析目标字数范围
+  const parseWordCountRange = (range: string) => {
+    const match = range.match(/(\d+)-(\d+)/)
+    if (match) {
+      return { min: parseInt(match[1]) * 10000, max: parseInt(match[2]) * 10000 }
+    }
+    if (range.includes("以上")) {
+      const minMatch = range.match(/(\d+)/)
+      return { min: minMatch ? parseInt(minMatch[1]) * 10000 : 100000, max: Infinity }
+    }
+    return { min: 0, max: Infinity }
+  }
+
+  // 解析章节范围
+  const parseChapterRange = (range: string) => {
+    const match = range.match(/(\d+)-(\d+)/)
+    if (match) {
+      return { min: parseInt(match[1]), max: parseInt(match[2]) }
+    }
+    const singleMatch = range.match(/(\d+)/)
+    if (singleMatch) {
+      return { min: parseInt(singleMatch[1]), max: parseInt(singleMatch[1]) }
+    }
+    return { min: 1, max: 1000 }
+  }
+
+  const wordRange = parseWordCountRange(lengthConfig.wordCount)
+  const chapterRange = parseChapterRange(lengthConfig.chapterRange)
+
+  // 使用用户设定的目标或默认范围
+  const targetMinWords = params.targetWords || wordRange.min
+  const targetMaxWords = params.targetWords ? params.targetWords : wordRange.max
+  const targetMinChapters = params.targetChapters || chapterRange.min
+  const targetMaxChapters = params.targetChapters ? params.targetChapters : chapterRange.max
+
+  // 计算进度
+  const wordProgress = Math.min(100, (params.currentWordCount / targetMinWords) * 100)
+  const chapterProgress = Math.min(100, (params.currentChapterCount / targetMinChapters) * 100)
+
+  // 分析最后一章的结局信号
+  let lastChapterSignals = {
+    hasEndingKeywords: false,
+    hasEpilogue: false,
+    conflictResolved: false,
+  }
+
+  let storyEndingAnalysis = ""
+
+  if (params.lastChapterContent) {
+    // 检测结局关键词
+    const endingKeywords = ["大结局", "完结", "终章", "落幕", "尾声", "后记", "全书完", "剧终", "结束"]
+    lastChapterSignals.hasEndingKeywords = endingKeywords.some(kw =>
+      params.lastChapterContent!.includes(kw) || params.lastChapterTitle?.includes(kw)
+    )
+
+    // 检测尾声/后记
+    const epilogueKeywords = ["尾声", "后记", "番外", "结局"]
+    lastChapterSignals.hasEpilogue = epilogueKeywords.some(kw =>
+      params.lastChapterContent!.includes(kw) || params.lastChapterTitle?.includes(kw)
+    )
+
+    // AI 分析最后一章内容
+    const analysisPrompt = `你是一位专业的小说编辑，请分析以下小说最后一章的内容，判断故事是否已经完结。
+
+小说标题：${params.title}
+小说简介：${params.description || "无"}
+小说类型：${params.genre || "通用"}
+
+最后一章标题：${params.lastChapterTitle || "未知"}
+最后一章内容摘要（前2000字）：
+${params.lastChapterContent.slice(0, 2000)}
+
+请分析：
+1. 这一章是否有结局感？（主要冲突是否解决、人物命运是否明确）
+2. 是否有明显的完结信号？（大结局、尾声等关键词）
+3. 故事是否适合在此结束？
+
+请用JSON格式回答，格式如下：
+{
+  "conflictResolved": true/false,
+  "hasEndingFeel": true/false,
+  "analysis": "简短分析（50字以内）"
+}
+
+只返回JSON，不要其他内容。`
+
+    try {
+      const aiResponse = await generateText({
+        prompt: analysisPrompt,
+        temperature: 0.3,
+        maxTokens: 200,
+      })
+
+      // 解析AI响应
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const analysis = JSON.parse(jsonMatch[0])
+        lastChapterSignals.conflictResolved = analysis.conflictResolved === true
+        storyEndingAnalysis = analysis.analysis || ""
+      }
+    } catch (error) {
+      console.error("[Completion Analysis] AI analysis failed:", error)
+      storyEndingAnalysis = "AI分析失败，请手动检查"
+    }
+  }
+
+  // 生成状态描述
+  const wordCountStatus = params.currentWordCount >= targetMinWords
+    ? `✓ 字数达标（${params.currentWordCount.toLocaleString()}字，目标${targetMinWords.toLocaleString()}字以上）`
+    : `○ 字数不足（${params.currentWordCount.toLocaleString()}字，目标${targetMinWords.toLocaleString()}字以上，还需${(targetMinWords - params.currentWordCount).toLocaleString()}字）`
+
+  const chapterStatus = params.currentChapterCount >= targetMinChapters
+    ? `✓ 章节达标（${params.currentChapterCount}章，目标${targetMinChapters}章以上）`
+    : `○ 章节不足（${params.currentChapterCount}章，目标${targetMinChapters}章以上，还需${targetMinChapters - params.currentChapterCount}章）`
+
+  // 计算完结度评分
+  let completionScore = 0
+  completionScore += Math.min(30, wordProgress * 0.3)  // 字数占30分
+  completionScore += Math.min(30, chapterProgress * 0.3) // 章节占30分
+  if (lastChapterSignals.hasEndingKeywords) completionScore += 20
+  if (lastChapterSignals.hasEpilogue) completionScore += 10
+  if (lastChapterSignals.conflictResolved) completionScore += 10
+
+  completionScore = Math.round(completionScore)
+
+  // 生成建议
+  const suggestions: string[] = []
+  if (params.currentWordCount < targetMinWords) {
+    suggestions.push(`建议继续创作，增加约${(targetMinWords - params.currentWordCount).toLocaleString()}字`)
+  }
+  if (params.currentChapterCount < targetMinChapters) {
+    suggestions.push(`建议增加${targetMinChapters - params.currentChapterCount}个章节`)
+  }
+  if (!lastChapterSignals.hasEndingKeywords && !lastChapterSignals.hasEpilogue) {
+    suggestions.push("最后一章未检测到结局关键词，建议添加'大结局'或'尾声'等标识")
+  }
+  if (!lastChapterSignals.conflictResolved && params.lastChapterContent) {
+    suggestions.push("AI分析显示主要冲突尚未完全解决，建议完善结局")
+  }
+  if (suggestions.length === 0) {
+    suggestions.push("小说已达到完结条件，可以进行人工审核后标记为完结")
+  }
+
+  // 判断是否可以完结
+  const isCompletable =
+    params.currentWordCount >= targetMinWords * 0.8 && // 字数达到目标的80%
+    params.currentChapterCount >= targetMinChapters * 0.8 && // 章节达到目标的80%
+    (lastChapterSignals.hasEndingKeywords || lastChapterSignals.hasEpilogue || lastChapterSignals.conflictResolved)
+
+  return {
+    isCompletable,
+    completionScore,
+    analysis: {
+      wordCountStatus,
+      chapterStatus,
+      storyEnding: storyEndingAnalysis || (params.lastChapterContent ? "已分析" : "暂无章节内容"),
+      suggestions,
+    },
+    lastChapterSignals,
+  }
 }

@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PenTool, BookOpen, FileText, Settings, Crown, Users, FolderOpen } from "lucide-react"
+import { PenTool, BookOpen, FileText, Settings, Crown, Users, FolderOpen, Layers } from "lucide-react"
 import Link from "next/link"
 import { HeaderNav } from "@/components/layout/user-nav"
 import { prisma } from "@/lib/prisma"
@@ -60,6 +60,16 @@ export default async function DashboardPage() {
                 <Users className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle className="text-lg">知识库</CardTitle>
                 <CardDescription>管理人物和设定</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/books">
+            <Card className="hover:border-primary transition-colors cursor-pointer">
+              <CardHeader>
+                <Layers className="h-8 w-8 mb-2 text-primary" />
+                <CardTitle className="text-lg">智能拆书</CardTitle>
+                <CardDescription>AI 分析书籍结构</CardDescription>
               </CardHeader>
             </Card>
           </Link>

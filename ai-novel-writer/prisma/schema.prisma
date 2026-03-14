@@ -92,6 +92,10 @@ model Project {
   settings      Json?
   genre         String?// 小说题材
   novelLength   String?   // 小说长度: micro, short, medium, long
+  status        String    @default("draft") // draft: 草稿, writing: 写作中, completed: 已完结
+  targetWords   Int?      // 目标字数（可选）
+  targetChapters Int?     // 目标章节数（可选）
+  completedAt   DateTime? // 完结时间
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -100,6 +104,7 @@ model Project {
   knowledge     KnowledgeEntry[]
 
   @@index([userId])
+  @@index([status])
   @@map("projects")
 }
 

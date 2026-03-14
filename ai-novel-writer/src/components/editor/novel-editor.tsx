@@ -430,11 +430,11 @@ export function NovelEditor({
 
       {/* 预览弹窗 */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="!max-w-[60vw] !w-[60vw] h-[80vh]">
-          <DialogHeader>
+        <DialogContent className="!max-w-[60vw] !w-[60vw] h-[80vh] flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>预览</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 h-[80vh]">
+          <ScrollArea className="flex-1 h-0">
             <div
               className="tiptap p-6"
               dangerouslySetInnerHTML={{ __html: previewHtml }}

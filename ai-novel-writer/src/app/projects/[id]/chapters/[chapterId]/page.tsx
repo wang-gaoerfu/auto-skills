@@ -111,6 +111,14 @@ export default function ChapterEditPage() {
         setChapter(chapterRes.chapter)
         setKnowledge(knowledgeRes.entries || [])
 
+        console.log("[Chapter Page] Loaded chapter data:", {
+          chapterId: params.chapterId,
+          chapterTitle: chapterRes.chapter?.title,
+          chapterOrder: chapterRes.chapter?.order,
+          hasContent: !!chapterRes.chapter?.content,
+          contentLength: chapterRes.chapter?.content?.length || 0,
+        })
+
         // 获取题材列表
         const genresRes = await fetch("/api/ai/generate", {
           method: "POST",
@@ -169,6 +177,12 @@ export default function ChapterEditPage() {
     try {
       let res: Response
 
+      console.log("[AI Generate] Starting generation:", {
+        action: aiAction,
+        chapterTitle: chapter?.title,
+        genre: selectedGenre || project?.genre,
+      })
+
       if (aiAction === "menuOptimize") {
         // 右键菜单优化
         res = await fetch("/api/ai/generate", {
@@ -187,6 +201,19 @@ export default function ChapterEditPage() {
         })
       } else if (aiAction === "generateContent") {
         // 题材化生成章节内容
+        // 确保章节标题存在
+        if (!chapter?.title) {
+          alert("章节标题为空，请先设置章节标题")
+          setAiLoading(false)
+          return
+        }
+
+        console.log("[AI Generate] Generating content for chapter:", {
+          chapterId: params.chapterId,
+          chapterTitle: chapter.title,
+          hasContent: !!chapter.content,
+        })
+
         res = await fetch("/api/ai/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -195,7 +222,7 @@ export default function ChapterEditPage() {
             projectId: params.id,
             params: {
               genre: selectedGenre || project?.genre || "urbanReborn",
-              chapterTitle: chapter?.title,
+              chapterTitle: chapter.title,
               chapterOutline: aiPrompt,
               previousContent: chapter?.content?.slice(-1000) || "",
             },
@@ -226,9 +253,14 @@ export default function ChapterEditPage() {
         setAiDialogOpen(false)
         setAiPrompt("")
         setSelectedMenuAction("")
+      } else {
+        const errorData = await res.json().catch(() => ({ message: "未知错误" }))
+        console.error("AI generate failed:", errorData)
+        alert(`AI生成失败: ${errorData.message || "请稍后重试"}`)
       }
     } catch (error) {
       console.error("AI generate failed:", error)
+      alert(`AI生成失败: ${error instanceof Error ? error.message : "网络错误"}`)
     } finally {
       setAiLoading(false)
     }

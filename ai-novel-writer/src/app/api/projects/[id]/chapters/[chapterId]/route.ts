@@ -83,14 +83,21 @@ export async function PUT(
       ? data.content.replace(/\s/g, "").length
       : existingChapter.wordCount
 
-    // 更新章节
-    const chapter = await prisma.chapter.update({
-      where: { id: chapterId },
-      data: {
-        ...data,
-        wordCount,
-      },
-    })
+    // 使用事务同时更新章节和项目的更新时间
+    const [chapter] = await prisma.$transaction([
+      prisma.chapter.update({
+        where: { id: chapterId },
+        data: {
+          ...data,
+          wordCount,
+        },
+      }),
+      // 同时更新项目的 updatedAt 时间
+      prisma.project.update({
+        where: { id },
+        data: { updatedAt: new Date() },
+      }),
+    ])
 
     return NextResponse.json({ chapter })
   } catch (error) {
