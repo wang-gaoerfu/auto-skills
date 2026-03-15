@@ -506,11 +506,69 @@ xxx
 xxx
 
 请直接输出剧情设定，不要有多余的开头和结尾。`
+    },
+    scene: {
+      title: "场景素材",
+      tags: ["AI生成", "场景"],
+      prompt: `作为小说创作顾问，请根据以下项目信息，生成5-8个常用场景素材。
+
+项目名称：${title}
+项目简介：${description || "暂无简介"}
+题材类型：${genre}
+
+请为每个场景提供：
+1. 场景名称
+2. 环境描写（视觉、听觉、气味等）
+3. 氛围营造要点
+4. 适合的情节类型
+
+格式要求：
+## 场景名称
+
+### 环境描写
+xxx
+
+### 氛围要点
+xxx
+
+### 适合情节
+xxx
+
+请直接输出场景素材，不要有多余的开头和结尾。`
+    },
+    dialogue: {
+      title: "对话模板",
+      tags: ["AI生成", "对话"],
+      prompt: `作为小说创作顾问，请根据以下项目信息，生成常用对话模板。
+
+项目名称：${title}
+项目简介：${description || "暂无简介"}
+题材类型：${genre}
+
+请生成以下类型的对话模板：
+1. 主角初次登场
+2. 重要人物相遇
+3. 冲突对峙场景
+4. 情感交流场景
+5. 高潮对决场景
+
+格式要求：
+## 对话类型
+
+**场景背景**：xxx
+
+**人物**：A、B
+
+**对话示例**：
+A："xxx"
+B："xxx"
+
+请直接输出对话模板，不要有多余的开头和结尾。`
     }
   }
 
   // 生成知识库
-  const knowledgeTypes = ["character", "world", "plot"] as const
+  const knowledgeTypes = ["character", "world", "plot", "scene", "dialogue"] as const
   const generatedKnowledge: string[] = []
 
   for (const type of knowledgeTypes) {

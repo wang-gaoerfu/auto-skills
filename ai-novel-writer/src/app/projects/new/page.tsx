@@ -87,6 +87,8 @@ export default function NewProjectPage() {
     character: "pending",
     world: "pending",
     plot: "pending",
+    scene: "pending",
+    dialogue: "pending",
   })
   const [autoCreateCreatedProjectId, setAutoCreateCreatedProjectId] = useState<string | null>(null)
   const [autoCreateError, setAutoCreateError] = useState<string | null>(null)
@@ -255,7 +257,7 @@ export default function NewProjectPage() {
     setAutoCreateMessage("")
     setAutoCreateProgress({ current: 0, total: 0 })
     setAutoCreateChapterProgress({ current: 0, total: 0 })
-    setAutoCreateKnowledgeStatus({ character: "pending", world: "pending", plot: "pending" })
+    setAutoCreateKnowledgeStatus({ character: "pending", world: "pending", plot: "pending", scene: "pending", dialogue: "pending" })
     setAutoCreateCreatedProjectId(null)
     setAutoCreateError(null)
     setAutoCreateTaskId(null)
@@ -730,7 +732,9 @@ export default function NewProjectPage() {
               <div className="flex items-center gap-3">
                 {autoCreateKnowledgeStatus.character === "completed" &&
                 autoCreateKnowledgeStatus.world === "completed" &&
-                autoCreateKnowledgeStatus.plot === "completed" ? (
+                autoCreateKnowledgeStatus.plot === "completed" &&
+                autoCreateKnowledgeStatus.scene === "completed" &&
+                autoCreateKnowledgeStatus.dialogue === "completed" ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                 ) : autoCreateStage === "generating_knowledge" ? (
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -741,10 +745,12 @@ export default function NewProjectPage() {
                   <span className={autoCreateKnowledgeStatus.character === "completed" ? "text-foreground" : "text-muted-foreground"}>
                     生成知识库
                   </span>
-                  <div className="flex gap-2 mt-1 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
                     {autoCreateKnowledgeStatus.character === "completed" && <span>✓ 人物</span>}
                     {autoCreateKnowledgeStatus.world === "completed" && <span>✓ 世界观</span>}
                     {autoCreateKnowledgeStatus.plot === "completed" && <span>✓ 剧情</span>}
+                    {autoCreateKnowledgeStatus.scene === "completed" && <span>✓ 场景</span>}
+                    {autoCreateKnowledgeStatus.dialogue === "completed" && <span>✓ 对话</span>}
                   </div>
                 </div>
               </div>
