@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface UserNavProps {
   membershipPlan?: string;
@@ -59,6 +60,7 @@ export function UserNav({ membershipPlan: propPlan }: UserNavProps) {
         <Link href="/register">
           <Button size="sm">注册</Button>
         </Link>
+        <ThemeToggle />
       </div>
     );
   }
@@ -72,6 +74,7 @@ export function UserNav({ membershipPlan: propPlan }: UserNavProps) {
           {membershipPlan === "PRO" ? "专业版" : membershipPlan === "VIP" ? "VIP" : "免费版"}
         </span>
       )}
+      <ThemeToggle />
       <DropdownMenu>
         <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8">
           <User className="h-4 w-4" />

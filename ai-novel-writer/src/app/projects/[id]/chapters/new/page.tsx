@@ -37,6 +37,7 @@ import {
   Users,
   AlertCircle,
 } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface ChapterInput {
   id: string
@@ -272,11 +273,14 @@ export default function NewChapterPage() {
             <ArrowLeft className="h-5 w-5" />
             <span>返回项目</span>
           </Link>
-          {project && (
-            <span className="text-sm text-muted-foreground">
-              {project.title}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {project && (
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {project.title}
+              </span>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

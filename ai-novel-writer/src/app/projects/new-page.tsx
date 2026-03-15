@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { getAllGenres } from "@/lib/ai/deepseek"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // 小说长度配置
 const NOVEL_LENGTHS = [
@@ -136,9 +137,12 @@ export default function NewProjectPage() {
                             <span className="text-xl font-bold">AI小说创作能手</span>
                         </Link>
                     </div>
-                    <Link href="/dashboard">
-                        <Button variant="ghost">返回仪表盘</Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href="/dashboard">
+                            <Button variant="ghost">返回仪表盘</Button>
+                        </Link>
+                        <ThemeToggle />
+                    </div>
                 </div>
             </header>
 

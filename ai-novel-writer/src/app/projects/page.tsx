@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { PenTool, Plus, BookOpen, CheckCircle2, Circle, FileText, Users, Globe, Zap, Loader2 } from "lucide-react"
 import { ProjectCardMenu } from "@/components/projects/project-card-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 import { getAllGenres } from "@/lib/ai/deepseek"
 
@@ -118,9 +119,12 @@ export default function ProjectsPage() {
             <PenTool className="h-6 w-6" />
             <span className="text-xl font-bold">AI小说创作能手</span>
           </Link>
-          <Link href="/dashboard">
-            <Button variant="ghost">返回仪表盘</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard">
+              <Button variant="ghost">返回仪表盘</Button>
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

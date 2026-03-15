@@ -40,6 +40,9 @@ import {
   Users,
   Globe,
   Zap,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react"
 
 interface Chapter {
@@ -96,6 +99,8 @@ export default function ChapterEditPage() {
   const [menuOptions, setMenuOptions] = useState<MenuOption[]>([])
   const [selectedMenuAction, setSelectedMenuAction] = useState<string>("")
   const [fullscreen, setFullscreen] = useState(false)
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [editedTitle, setEditedTitle] = useState("")
 
   // 加载数据
   useEffect(() => {
@@ -304,6 +309,51 @@ export default function ChapterEditPage() {
     ? chapter.content.replace(/<[^>]*>/g, "").replace(/\s/g, "").length
     : 0
 
+  // 开始编辑标题
+  const startEditingTitle = () => {
+    if (chapter) {
+      setEditedTitle(chapter.title)
+      setIsEditingTitle(true)
+    }
+  }
+
+  // 取消编辑标题
+  const cancelEditingTitle = () => {
+    setIsEditingTitle(false)
+    setEditedTitle("")
+  }
+
+  // 保存标题
+  const saveTitle = async () => {
+    if (!chapter || !editedTitle.trim()) return
+
+    setSaving(true)
+    try {
+      const res = await fetch(
+        `/api/projects/${params.id}/chapters/${params.chapterId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: editedTitle.trim(),
+            content: chapter.content,
+          }),
+        }
+      )
+
+      if (res.ok) {
+        const data = await res.json()
+        setChapter(data.chapter)
+        setIsEditingTitle(false)
+        setEditedTitle("")
+      }
+    } catch (error) {
+      console.error("Save title failed:", error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -326,7 +376,49 @@ export default function ChapterEditPage() {
               返回
             </Link>
             <div>
-              <h1 className="text-lg font-semibold">{chapter?.title}</h1>
+              {isEditingTitle ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="text-lg font-semibold h-8 w-[300px]"
+                    placeholder="输入章节标题"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveTitle()
+                      if (e.key === "Escape") cancelEditingTitle()
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={saveTitle}
+                    disabled={saving || !editedTitle.trim()}
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={cancelEditingTitle}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group">
+                  <h1 className="text-lg font-semibold">{chapter?.title}</h1>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={startEditingTitle}
+                    title="编辑标题"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">
                 {project?.title}
               </p>

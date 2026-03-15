@@ -13,6 +13,7 @@ import {
   Settings,
   Shield,
 } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -42,11 +43,12 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container flex h-16 items-center px-4">
+        <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6" />
             <span className="text-xl font-bold">管理后台</span>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 

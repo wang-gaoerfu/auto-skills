@@ -30,6 +30,7 @@ import {
   Download,
 } from "lucide-react"
 import { toast } from "sonner"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // 模拟的书籍分析状态
 interface BookAnalysis {
@@ -180,9 +181,12 @@ export default function BooksPage() {
               <span className="text-xl font-bold">AI小说创作能手</span>
             </Link>
           </div>
-          <Link href="/dashboard">
-            <Button variant="ghost">返回仪表盘</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard">
+              <Button variant="ghost">返回仪表盘</Button>
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

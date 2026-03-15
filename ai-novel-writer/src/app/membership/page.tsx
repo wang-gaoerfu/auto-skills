@@ -31,6 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface MembershipInfo {
   plan: string
@@ -130,10 +131,11 @@ export default function MembershipPage() {
             <BookOpen className="h-6 w-6" />
             <span className="text-xl font-bold">墨飞小说创造</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link href="/dashboard">
               <Button variant="ghost">返回仪表盘</Button>
             </Link>
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground">
                 <User className="h-4 w-4" />

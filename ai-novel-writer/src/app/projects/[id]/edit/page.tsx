@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Loader2, PenTool, Lock, CheckCircle2, Circle } from "lucide-react"
 import Link from "next/link"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface Project {
   id: string
@@ -137,11 +138,12 @@ export default function EditProjectPage() {
         return (
             <div className="min-h-screen bg-background">
                 <header className="border-b">
-                    <div className="container flex h-16 items-center px-4">
+                    <div className="container flex h-16 items-center justify-between px-4">
                         <Link href="/projects" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                             <ArrowLeft className="h-5 w-5" />
                             <span>返回项目列表</span>
                         </Link>
+                        <ThemeToggle />
                     </div>
                 </header>
                 <main className="container max-w-2xl px-4 py-8">
@@ -161,11 +163,12 @@ export default function EditProjectPage() {
         <div className="min-h-screen bg-background">
             {/* 顶部导航 */}
             <header className="border-b">
-                <div className="container flex h-16 items-center px-4">
+                <div className="container flex h-16 items-center justify-between px-4">
                     <Link href={`/projects/${projectId}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
                         <ArrowLeft className="h-5 w-5" />
                         <span>返回项目</span>
                     </Link>
+                    <ThemeToggle />
                 </div>
             </header>
 

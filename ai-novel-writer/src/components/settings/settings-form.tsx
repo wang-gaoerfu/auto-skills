@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface UserData {
   id: string;
@@ -149,6 +150,7 @@ export function SettingsForm() {
             <span className="text-sm text-muted-foreground">
               {user?.name || user?.email}
             </span>
+            <ThemeToggle />
           </div>
         </div>
       </header>

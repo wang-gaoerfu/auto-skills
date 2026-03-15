@@ -25,6 +25,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft, Loader2, PenTool, Sparkles, Wand2, Rocket, CheckCircle2, Circle, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // 小说长度配置
 const NOVEL_LENGTHS = [
@@ -462,11 +463,12 @@ export default function NewProjectPage() {
     <div className="min-h-screen bg-background">
       {/* 顶部导航 */}
       <header className="border-b">
-        <div className="container flex h-16 items-center px-4">
+        <div className="container flex h-16 items-center justify-between px-4">
           <Link href="/projects" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
             <span>返回项目列表</span>
           </Link>
+          <ThemeToggle />
         </div>
       </header>
 

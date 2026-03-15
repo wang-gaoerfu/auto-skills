@@ -215,11 +215,9 @@ ${characters || "暂无"}
         for (let i = 0; i < chaptersToGenerate; i++) {
           const chapterOrder = currentChapterCount + i + 1
           const isLastChapter = i === chaptersToGenerate - 1
-          // 使用统一的章节标题格式
+          // 使用统一的章节标题格式：【第X章】 或 【第X章】 大结局
           const chapterTitle = isEndingMode && isLastChapter
-            ? `【第${chapterOrder}章 大结局】`
-            : isEndingMode && !isLastChapter
-            ? `【第${chapterOrder}章】`
+            ? `【第${chapterOrder}章】 大结局`
             : `【第${chapterOrder}章】`
 
           send({

@@ -23,6 +23,7 @@ import {
   Minus,
 } from "lucide-react"
 import { marked } from "marked"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface Chapter {
   id: string
@@ -304,6 +305,9 @@ export default function ReadPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* 全局主题切换 */}
+            <ThemeToggle />
           </div>
         </div>
 

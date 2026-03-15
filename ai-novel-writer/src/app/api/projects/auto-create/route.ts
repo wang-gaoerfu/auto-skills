@@ -681,7 +681,7 @@ B："xxx"
     const chapterOrder = i + 1
     const isLastChapter = i === ctx.targetChapters - 1
     const chapterTitle = isLastChapter
-      ? `【第${chapterOrder}章 大结局】`
+      ? `【第${chapterOrder}章】 大结局`
       : `【第${chapterOrder}章】`
 
     send({
@@ -775,9 +775,9 @@ ${chapterOutline}
         }
       }
 
-      // 确保最后一章标题包含"大结局"
+      // 确保最后一章标题包含"大结局"（格式：【第X章】 大结局）
       if (isLastChapter && !realTitle.includes("大结局")) {
-        realTitle = realTitle.replace(/】$/, " 大结局】")
+        realTitle = realTitle.replace(/】$/, "】 大结局")
       }
 
       // 计算字数
@@ -1033,7 +1033,7 @@ async function continueAutoCreate(
     const chapterOrder = i + 1
     const isLastChapter = i === ctx.targetChapters - 1
     const chapterTitle = isLastChapter
-      ? `【第${chapterOrder}章 大结局】`
+      ? `【第${chapterOrder}章】 大结局`
       : `【第${chapterOrder}章】`
 
     send({
@@ -1104,7 +1104,7 @@ ${chapterOutline}
       }
 
       if (isLastChapter && !realTitle.includes("大结局")) {
-        realTitle = realTitle.replace(/】$/, " 大结局】")
+        realTitle = realTitle.replace(/】$/, "】 大结局")
       }
 
       const wordCount = content.replace(/\s/g, "").length
