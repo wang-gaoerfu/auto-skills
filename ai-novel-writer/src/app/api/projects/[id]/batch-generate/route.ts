@@ -218,6 +218,8 @@ ${characters || "暂无"}
           // 使用统一的章节标题格式
           const chapterTitle = isEndingMode && isLastChapter
             ? `【第${chapterOrder}章 大结局】`
+            : isEndingMode && !isLastChapter
+            ? `【第${chapterOrder}章】`
             : `【第${chapterOrder}章】`
 
           send({
@@ -285,7 +287,7 @@ ${chapterOutline}
               : { content: previousContent }
 
             // 3. 生成章节内容
-            const content = await generateGenreChapterContent({
+            let content = await generateGenreChapterContent({
               genre,
               chapterTitle,
               chapterOutline,
@@ -298,6 +300,24 @@ ${chapterOutline}
               projectTitle: project.title,
               projectDescription: project.description || "",
             })
+
+            // 【新增】如果是完结模式的最后一章，确保包含明确的结局标识
+            if (isEndingMode && isLastChapter) {
+              // 检查内容是否已包含强结局关键词
+              const strongEndingKeywords = ["大结局", "全书完", "剧终", "终章", "完结篇", "落幕"]
+              const hasStrongEnding = strongEndingKeywords.some(kw => content.includes(kw))
+
+              // 如果没有明确的结局标识，在内容末尾添加
+              if (!hasStrongEnding) {
+                // 在内容末尾添加结局确认
+                const endingMarker = `
+
+---
+
+**（全书完）**`
+                content = content + endingMarker
+              }
+            }
 
             // 提取真实标题
             let realTitle = chapterTitle

@@ -35,6 +35,7 @@ import {
   FileText,
   BookOpen,
   Users,
+  AlertCircle,
 } from "lucide-react"
 
 interface ChapterInput {
@@ -112,6 +113,13 @@ export default function NewChapterPage() {
   const characters = knowledge.filter((k) => k.entryType === "character")
   const worldBuilding = knowledge.find((k) => k.entryType === "world")
   const plots = knowledge.filter((k) => k.entryType === "plot")
+
+  // 检查知识库是否为空
+  const hasKnowledge = knowledge.length > 0
+  const hasCharacters = characters.length > 0
+  const hasWorldOrPlot = worldBuilding || plots.length > 0
+  // 用于判断是否显示知识库警告（没有知识库时显示）
+  const hasKnowledgeBase = hasKnowledge
 
   // 添加章节输入
   function addChapter() {
@@ -298,6 +306,27 @@ export default function NewChapterPage() {
               {error && (
                 <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
                   {error}
+                </div>
+              )}
+
+              {/* 知识库检查提示 */}
+              {!hasKnowledgeBase && (
+                <div className="p-4 border rounded-lg bg-amber-50 dark:bg-amber-950/20 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="font-medium">知识库为空</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    建议先创建知识库（人物、世界观、剧情），AI 生成章节时会保持内容一致性
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/projects/${params.id}/knowledge`)}
+                  >
+                    前往知识库
+                  </Button>
                 </div>
               )}
 

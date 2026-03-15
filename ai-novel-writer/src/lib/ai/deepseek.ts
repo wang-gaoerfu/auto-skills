@@ -1456,13 +1456,18 @@ export async function analyzeCompletion(params: {
 
   // 解析目标字数范围
   const parseWordCountRange = (range: string) => {
+    // 检查是否包含"万"字来决定是否需要乘以10000
+    const hasWanUnit = range.includes("万")
+
     const match = range.match(/(\d+)-(\d+)/)
     if (match) {
-      return { min: parseInt(match[1]) * 10000, max: parseInt(match[2]) * 10000 }
+      const multiplier = hasWanUnit ? 10000 : 1
+      return { min: parseInt(match[1]) * multiplier, max: parseInt(match[2]) * multiplier }
     }
     if (range.includes("以上")) {
       const minMatch = range.match(/(\d+)/)
-      return { min: minMatch ? parseInt(minMatch[1]) * 10000 : 100000, max: Infinity }
+      const multiplier = hasWanUnit ? 10000 : 1
+      return { min: minMatch ? parseInt(minMatch[1]) * multiplier : 100000, max: Infinity }
     }
     return { min: 0, max: Infinity }
   }
@@ -1501,6 +1506,7 @@ export async function analyzeCompletion(params: {
   }
 
   let storyEndingAnalysis = ""
+  let hasStrongEnding = false // 提升到外部作用域
 
   if (params.lastChapterContent) {
     // 检测结局关键词
@@ -1515,8 +1521,21 @@ export async function analyzeCompletion(params: {
       params.lastChapterContent!.includes(kw) || params.lastChapterTitle?.includes(kw)
     )
 
-    // AI 分析最后一章内容
-    const analysisPrompt = `你是一位专业的小说编辑，请分析以下小说最后一章的内容，判断故事是否已经完结。
+    // 【新增】强结局关键词检测 - 如果检测到这些关键词，直接判定为冲突已解决
+    const strongEndingKeywords = ["大结局", "全书完", "剧终", "终章", "完结篇", "落幕"]
+    hasStrongEnding = strongEndingKeywords.some(kw =>
+      params.lastChapterContent!.includes(kw) || params.lastChapterTitle?.includes(kw)
+    )
+
+    if (hasStrongEnding) {
+      // 有强结局关键词，直接标记为完结，跳过AI分析
+      lastChapterSignals.conflictResolved = true
+      lastChapterSignals.hasEndingKeywords = true
+      storyEndingAnalysis = "检测到明确的完结标识（大结局/全书完等），故事已完结"
+      console.log("[Completion Analysis] Strong ending keywords detected, marking as completed")
+    } else {
+      // 只有在没有强结局关键词时才调用 AI 分析
+      const analysisPrompt = `你是一位专业的小说编辑，请分析以下小说最后一章的内容，判断故事是否已经完结。
 
 小说标题：${params.title}
 小说简介：${params.description || "无"}
@@ -1540,34 +1559,43 @@ ${params.lastChapterContent.slice(0, 2000)}
 
 只返回JSON，不要其他内容。`
 
-    try {
-      const aiResponse = await generateText({
-        prompt: analysisPrompt,
-        temperature: 0.3,
-        maxTokens: 200,
-      })
+      try {
+        const aiResponse = await generateText({
+          prompt: analysisPrompt,
+          temperature: 0.3,
+          maxTokens: 200,
+        })
 
-      // 解析AI响应
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const analysis = JSON.parse(jsonMatch[0])
-        lastChapterSignals.conflictResolved = analysis.conflictResolved === true
-        storyEndingAnalysis = analysis.analysis || ""
+        // 解析AI响应
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          const analysis = JSON.parse(jsonMatch[0])
+          lastChapterSignals.conflictResolved = analysis.conflictResolved === true
+          storyEndingAnalysis = analysis.analysis || ""
+        }
+      } catch (error) {
+        console.error("[Completion Analysis] AI analysis failed:", error)
+        storyEndingAnalysis = "AI分析失败，请手动检查"
       }
-    } catch (error) {
-      console.error("[Completion Analysis] AI analysis failed:", error)
-      storyEndingAnalysis = "AI分析失败，请手动检查"
     }
   }
 
   // 生成状态描述
+  const targetWordsDisplay = targetMaxWords < Infinity
+    ? `${targetMinWords.toLocaleString()}-${targetMaxWords.toLocaleString()}字`
+    : `${targetMinWords.toLocaleString()}字以上`
+
+  const targetChaptersDisplay = targetMaxChapters < Infinity
+    ? `${targetMinChapters}-${targetMaxChapters}章`
+    : `${targetMinChapters}章以上`
+
   const wordCountStatus = params.currentWordCount >= targetMinWords
-    ? `✓ 字数达标（${params.currentWordCount.toLocaleString()}字，目标${targetMinWords.toLocaleString()}字以上）`
-    : `○ 字数不足（${params.currentWordCount.toLocaleString()}字，目标${targetMinWords.toLocaleString()}字以上，还需${(targetMinWords - params.currentWordCount).toLocaleString()}字）`
+    ? `✓ 字数达标（${params.currentWordCount.toLocaleString()}字，目标${targetWordsDisplay}）`
+    : `○ 字数不足（${params.currentWordCount.toLocaleString()}字，目标${targetWordsDisplay}，还需${(targetMinWords - params.currentWordCount).toLocaleString()}字）`
 
   const chapterStatus = params.currentChapterCount >= targetMinChapters
-    ? `✓ 章节达标（${params.currentChapterCount}章，目标${targetMinChapters}章以上）`
-    : `○ 章节不足（${params.currentChapterCount}章，目标${targetMinChapters}章以上，还需${targetMinChapters - params.currentChapterCount}章）`
+    ? `✓ 章节达标（${params.currentChapterCount}章，目标${targetChaptersDisplay}）`
+    : `○ 章节不足（${params.currentChapterCount}章，目标${targetChaptersDisplay}，还需${targetMinChapters - params.currentChapterCount}章）`
 
   // 计算完结度评分
   let completionScore = 0
@@ -1579,32 +1607,54 @@ ${params.lastChapterContent.slice(0, 2000)}
 
   completionScore = Math.round(completionScore)
 
-  // 生成建议
-  const suggestions: string[] = []
-  if (params.currentWordCount < targetMinWords) {
-    suggestions.push(`建议继续创作，增加约${(targetMinWords - params.currentWordCount).toLocaleString()}字`)
-  }
-  if (params.currentChapterCount < targetMinChapters) {
-    suggestions.push(`建议增加${targetMinChapters - params.currentChapterCount}个章节`)
-  }
-  if (!lastChapterSignals.hasEndingKeywords && !lastChapterSignals.hasEpilogue) {
-    suggestions.push("最后一章未检测到结局关键词，建议添加'大结局'或'尾声'等标识")
-  }
-  if (!lastChapterSignals.conflictResolved && params.lastChapterContent) {
-    suggestions.push("AI分析显示主要冲突尚未完全解决，建议完善结局")
-  }
-  if (suggestions.length === 0) {
-    suggestions.push("小说已达到完结条件，可以进行人工审核后标记为完结")
-  }
-
-  // 判断是否可以完结
+  // 判断是否可以完结（先计算，用于决定建议内容）
   const isCompletable =
     params.currentWordCount >= targetMinWords * 0.8 && // 字数达到目标的80%
     params.currentChapterCount >= targetMinChapters * 0.8 && // 章节达到目标的80%
     (lastChapterSignals.hasEndingKeywords || lastChapterSignals.hasEpilogue || lastChapterSignals.conflictResolved)
 
+  // 生成建议（如果已可完结，不再添加"建议继续创作"的建议）
+  const suggestions: string[] = []
+
+  if (isCompletable) {
+    // 已达到完结条件，只给出优化建议（非强制）
+    if (params.currentWordCount < targetMinWords) {
+      suggestions.push(`字数略低于目标（当前${params.currentWordCount.toLocaleString()}字，目标${targetMinWords.toLocaleString()}字），但已可完结`)
+    }
+    if (params.currentChapterCount < targetMinChapters) {
+      suggestions.push(`章节数略低于目标（当前${params.currentChapterCount}章，目标${targetMinChapters}章），但已可完结`)
+    }
+    // 如果没有任何优化建议，显示完结确认
+    if (suggestions.length === 0) {
+      suggestions.push("小说已达到完结条件，可以进行人工审核后标记为完结")
+    } else {
+      // 有优化建议时，在最后添加完结确认
+      suggestions.push("✓ 已满足完结条件，可以随时标记完结")
+    }
+  } else {
+    // 未达到完结条件，给出必须完成的建议
+    if (params.currentWordCount < targetMinWords * 0.8) {
+      suggestions.push(`字数不足，建议继续创作，增加约${(targetMinWords - params.currentWordCount).toLocaleString()}字`)
+    } else if (params.currentWordCount < targetMinWords) {
+      suggestions.push(`字数接近目标（还需${(targetMinWords - params.currentWordCount).toLocaleString()}字），继续创作或可完结`)
+    }
+
+    if (params.currentChapterCount < targetMinChapters * 0.8) {
+      suggestions.push(`章节不足，建议增加${targetMinChapters - params.currentChapterCount}个章节`)
+    } else if (params.currentChapterCount < targetMinChapters) {
+      suggestions.push(`章节数接近目标（还需${targetMinChapters - params.currentChapterCount}章），继续创作或可完结`)
+    }
+
+    if (!lastChapterSignals.hasEndingKeywords && !lastChapterSignals.hasEpilogue) {
+      suggestions.push("最后一章未检测到结局关键词，建议添加'大结局'或'尾声'等标识")
+    }
+    if (!lastChapterSignals.conflictResolved && params.lastChapterContent && !hasStrongEnding) {
+      suggestions.push("AI分析显示主要冲突尚未完全解决，建议完善结局")
+    }
+  }
+
   return {
-    isCompletable,
+    isCompletable: isCompletable,
     completionScore,
     analysis: {
       wordCountStatus,
