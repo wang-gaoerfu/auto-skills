@@ -2,7 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { BookOpen, LogOut, User, Crown, Settings, Loader2 } from "lucide-react";
+import { BookOpen, LogOut, User, Crown, Settings, Loader2, Film } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -83,6 +83,12 @@ export function UserNav({ membershipPlan: propPlan }: UserNavProps) {
           <DropdownMenuGroup>
             <DropdownMenuLabel>我的账户</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Link href="/scripts" className="flex items-center cursor-pointer w-full">
+                <Film className="h-4 w-4 mr-2" />
+                <span>剧本工坊</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Link href="/settings" className="flex items-center cursor-pointer w-full">
                 <Settings className="h-4 w-4 mr-2" />
