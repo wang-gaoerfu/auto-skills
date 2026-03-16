@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -29,10 +29,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
-
-import { checkProjectQuota } from "@/lib/script/utils"
-
-import { ScriptErrorCode } from "@/lib/script/types"
+import { cn } from "@/lib/utils"
 
 // Script project interface
 interface ScriptProject {
@@ -55,38 +52,35 @@ interface ScriptProject {
     characters: number
     scenes: number
   }
-  generationTasks?: {
-    id: string
-    status: string
-    progress: number
-  }[]
-}
-
- sources?: {
+  sources?: Array<{
     id: string
     chapterTitle: string
     wordCount: number
-  }[]
-            characters?: {
+  }>
+  characters?: Array<{
     id: string
     name: string
     role: string | null
     shotCount: number
-  }[]
-            scenes?: {
+  }>
+  scenes?: Array<{
     id: string
     sceneNumber: number
     title: string
-            shotCount: number
-            totalDuration: number
-            shots: {
-              id: string
-              shotNumber: string
-              status: string
-            }[]
-          }[]
-        }[]
-      }
+    shotCount: number
+    totalDuration: number
+    shots?: Array<{
+      id: string
+      shotNumber: string
+      status: string
+    }>
+  }>
+  generationTasks?: Array<{
+    id: string
+    status: string
+    progress: number
+  }>
+}
 
 // Status configuration
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -105,19 +99,6 @@ const SOURCE_TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode 
   EXTERNAL: { label: "外部导入", icon: <ExternalLink className="h-3 w-3" /> },
   ORIGINAL: { label: "原创创作", icon: <Sparkles className="h-3 w-3" /> },
 }
-
-// Genre options
-const GENRE_OPTIONS = [
-  { value: "都市", label: "都市" },
-  { value: "玄幻", label: "玄幻" },
-  { value: "修仙", label: "修仙" },
-  { value: "言情", label: "言情" },
-  { value: "悬疑", label: "悬疑" },
-  { value: "历史", label: "历史" },
-  { value: "科幻", label: "科幻" },
-  { value: "武侠", label: "武侠" },
-  { value: "其他", label: "其他" },
-]
 
 export default function ScriptProjectDetailPage() {
   const router = useRouter()
@@ -201,12 +182,12 @@ export default function ScriptProjectDetailPage() {
     )
   }
 
-  const statusInfo = STATUS_CONFIG[project.status]
-  const sourceInfo = SOURCE_TYPE_CONFIG[project.sourceType]
+  const statusInfo = STATUS_CONFIG[project.status] || STATUS_CONFIG.draft
+  const sourceInfo = SOURCE_TYPE_CONFIG[project.sourceType] || SOURCE_TYPE_CONFIG.ORIGINAL
 
   // Calculate totals from scenes
   const totalShots = project.scenes?.reduce((sum, scene) => sum + (scene.shots?.length || 0), 0) || 0
-  const totalDuration = project.scenes?.reduce((sum, scene) => sum + (scene.totalDuration || 0), 0)
+  const totalDuration = project.scenes?.reduce((sum, scene) => sum + (scene.totalDuration || 0), 0) || 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -243,224 +224,223 @@ export default function ScriptProjectDetailPage() {
               场景
             </TabsTrigger>
           </TabsList>
-        </Tabs>
 
-        <TabsContent value="overview" className="mt-6">
-          {/* Overview Tab */}
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Basic Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>基本信息</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">来源类型</span>
-                  <span className="flex items-center gap-1">
-                    {sourceInfo.icon}
-                    {sourceInfo.label}
-                  </span>
-                </div>
-                {project.sourceNovelTitle && (
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Basic Info Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>基本信息</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">来源小说</span>
-                    <span>{project.sourceNovelTitle}</span>
+                    <span className="text-muted-foreground">来源类型</span>
+                    <span className="flex items-center gap-1">
+                      {sourceInfo.icon}
+                      {sourceInfo.label}
+                    </span>
+                  </div>
+                  {project.sourceNovelTitle && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">来源小说</span>
+                      <span>{project.sourceNovelTitle}</span>
+                    </div>
+                  )}
+                  {project.genre && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">题材</span>
+                      <span>{project.genre}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">状态</span>
+                    <span className={cn("px-2 py-1 rounded text-xs", statusInfo.color)}>
+                      {statusInfo.label}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">进度</span>
+                    <span>{project.progress}%</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Stats Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>统计信息</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">素材章节</span>
+                    <span>{project._count?.sources || 0} 章</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">角色数量</span>
+                    <span>{project._count?.characters || 0} 个</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">场景数量</span>
+                    <span>{project._count?.scenes || 0} 个</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">镜头数量</span>
+                    <span>{totalShots} 个</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">总时长</span>
+                    <span>{totalDuration} 秒</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-4 mt-6">
+              <Button onClick={() => router.push(`/scripts/${project.id}/edit`)}>
+                <Edit className="h-4 w-4 mr-2" />
+                编辑内容
+              </Button>
+              <Button onClick={handleStartGeneration} disabled={project.status === "generating"}>
+                <PlayCircle className="h-4 w-4 mr-2" />
+                {project.status === "generating" ? "生成中..." : "开始生成"}
+              </Button>
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="h-4 w-4 mr-2" />
+                导出
+              </Button>
+              <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
+                删除项目
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sources" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>素材内容</CardTitle>
+                <Link href={`/scripts/${project.id}/edit`}>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加章节
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {project.sources && project.sources.length > 0 ? (
+                  <div className="space-y-2">
+                    {project.sources.map((source, index) => (
+                      <div key={source.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <span className="text-muted-foreground text-sm">第{index + 1} 章</span>
+                          <span className="font-medium">{source.chapterTitle}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">{source.wordCount} 字</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    暂无素材内容
                   </div>
                 )}
-                {project.genre && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">题材</span>
-                    <span>{project.genre}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">状态</span>
-                  <span className={cn("px-2 py-1 rounded text-xs", statusInfo.color)}>
-                    {statusInfo.label}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">进度</span>
-                  <span>{project.progress}%</span>
-                </div>
               </CardContent>
             </Card>
+          </TabsContent>
 
-            {/* Stats Card */}
+          <TabsContent value="characters" className="mt-6">
             <Card>
-              <CardHeader>
-                <CardTitle>统计信息</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>角色列表</CardTitle>
+                <Link href={`/scripts/${project.id}/edit`}>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加角色
+                  </Button>
+                </Link>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">素材章节</span>
-                  <span>{project._count?.sources || 0} 章</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">角色数量</span>
-                  <span>{project._count?.characters || 0} 个</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">场景数量</span>
-                  <span>{project._count?.scenes || 0} 个</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">镜头数量</span>
-                  <span>{totalShots} 个</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">总时长</span>
-                  <span>{totalDuration} 秒</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-4 mt-6">
-            <Button onClick={() => router.push(`/scripts/${project.id}/edit`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              编辑内容
-            </Button>
-            <Button onClick={handleStartGeneration} disabled={project.status === "generating"}>
-              <PlayCircle className="h-4 w-4 mr-2" />
-              {project.status === "generating" ? "生成中..." : "开始生成"}
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              导出
-            </Button>
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-              删除项目
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sources" className="mt-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>素材内容</CardTitle>
-              <Link href={`/scripts/${project.id}/edit`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加章节
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {project.sources && project.sources.length > 0 ? (
-                <div className="space-y-2">
-                  {project.sources.map((source, index) => (
-                    <div key={source.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <span className="text-muted-foreground text-sm">第{index + 1} 章</span>
-                        <span className="font-medium">{source.chapterTitle}</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{source.wordCount} 字</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无素材内容，去添加章节"
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="characters" className="mt-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>角色列表</CardTitle>
-              <Link href={`/scripts/${project.id}/edit`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加角色
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {project.characters && project.characters.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {project.characters.map((character) => (
-                    <div key={character.id} className="p-3 border rounded-lg">
-                      <div className="font-medium">{character.name}</div>
-                      {character.role && (
-                        <div className="text-sm text-muted-foreground">{character.role}</div>
-                      )}
-                      <div className="text-xs text-muted-foreground mt-1">
-                        出场 {character.shotCount} 次
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无角色信息
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="scenes" className="mt-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>场景列表</CardTitle>
-              <Link href={`/scripts/${project.id}/edit`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加场景
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {project.scenes && project.scenes.length > 0? (
-                <div className="space-y-3">
-                  {project.scenes.map((scene) => (
-                    <div key={scene.id} className="p-3 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">场景 {scene.sceneNumber}: {scene.title}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {scene.shots?.length || 0} 个镜头 · {scene.totalDuration} 秒
- </div>
+              <CardContent>
+                {project.characters && project.characters.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {project.characters.map((character) => (
+                      <div key={character.id} className="p-3 border rounded-lg">
+                        <div className="font-medium">{character.name}</div>
+                        {character.role && (
+                          <div className="text-sm text-muted-foreground">{character.role}</div>
+                        )}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          出场 {character.shotCount} 次
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无场景信息
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </main>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    暂无角色信息
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>
-              确定要删除剧本「{project.title}」吗？此操作不可撤销，所有场景、镜头和相关数据都将被永久删除。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={!!deletingId}>
-              取消
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={!!deletingId}>
-              {deletingId && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              删除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <TabsContent value="scenes" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>场景列表</CardTitle>
+                <Link href={`/scripts/${project.id}/edit`}>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加场景
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {project.scenes && project.scenes.length > 0 ? (
+                  <div className="space-y-3">
+                    {project.scenes.map((scene) => (
+                      <div key={scene.id} className="p-3 border rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">场景 {scene.sceneNumber}: {scene.title}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {scene.shots?.length || 0} 个镜头 · {scene.totalDuration} 秒
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    暂无场景信息
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Delete Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>确认删除</DialogTitle>
+              <DialogDescription>
+                确定要删除剧本「{project.title}」吗？此操作不可撤销，所有场景、镜头和相关数据都将被永久删除。
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={!!deletingId}>
+                取消
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={!!deletingId}>
+                {deletingId && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                删除
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </main>
     </div>
   )
 }
