@@ -211,7 +211,7 @@ export default function ScriptsPage() {
                         </CardTitle>
                       </Link>
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="h-8 w-8">
+                        <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
