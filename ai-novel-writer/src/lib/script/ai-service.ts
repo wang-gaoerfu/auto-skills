@@ -2,6 +2,7 @@
  * AI 服务层 - DeepSeek 客户端封装
  */
 
+import * as yaml from "js-yaml"
 import {
   buildDeepSeekRequest,
   estimateTokens,
@@ -253,17 +254,8 @@ export class ScriptAIService {
     })
 
     // 解析 YAML 响应
-    try {
-      const yamlMatch = response.content.match(/```yaml\s*([\s\S]*?)\s*```/)
-      if (yamlMatch) {
-        // 这里应该使用 js-yaml 库解析
-        // 简化处理：返回基本结构
-        return { scenes: [] }
-      }
-      return { scenes: [] }
-    } catch {
-      return { scenes: [] }
-    }
+    const result = this.parseYAMLResponse<any>(response.content, "scenes")
+    return { scenes: result.data || [] }
   }
 
   /**
@@ -272,8 +264,8 @@ export class ScriptAIService {
   async extractCharacters(chapterContent: string): Promise<{
     characters: Array<{
       name: string
-      role: string
-      gender: string
+      role: "protagonist" | "antagonist" | "supporting" | "minor"
+      gender: "male" | "female" | "other" | "unknown"
       ageRange: string
       appearance: string
       personality: string
@@ -291,7 +283,8 @@ export class ScriptAIService {
     })
 
     // 解析响应
-    return { characters: [] }
+    const result = this.parseYAMLResponse<any>(response.content, "characters")
+    return { characters: result.data || [] }
   }
 
   /**
@@ -336,7 +329,8 @@ export class ScriptAIService {
     })
 
     // 解析响应
-    return { shots: [] }
+    const result = this.parseYAMLResponse<any>(response.content, "shots")
+    return { shots: result.data || [] }
   }
 
   /**
@@ -379,10 +373,41 @@ export class ScriptAIService {
   estimateCost(promptTokens: number, completionTokens: number): number {
     // DeepSeek 价格（示例，实际价格请参考官方）
     // 输入：¥0.001/1K tokens
-    // 输出：¥0.002/1K tokens
+    // 输出:¥0.002/1K tokens
     const inputCost = (promptTokens / 1000) * 0.001
     const outputCost = (completionTokens / 1000) * 0.002
     return inputCost + outputCost
+  }
+
+  /**
+   * 解析 YAML 响应
+   */
+  private parseYAMLResponse<T>(content: string, key: string): { data: T[] } {
+    try {
+      // 提取 YAML 代码块
+      const yamlMatch = content.match(/```yaml\s*([\s\S]*?)\s*```/)
+      let yamlContent: string
+
+      if (yamlMatch) {
+        yamlContent = yamlMatch[1]
+      } else {
+        // 尝试直接使用整个内容
+        yamlContent = content
+      }
+
+      // 使用 js-yaml 解析
+      const parsed = yaml.load(yamlContent) as Record<string, unknown>
+
+      if (parsed && parsed[key]) {
+        return { data: parsed[key] as T[] }
+      }
+
+      return { data: [] as T[] }
+    } catch (error) {
+      console.error("Failed to parse YAML response:", error)
+      console.error("Original content:", content.substring(0, 500))
+      return { data: [] as T[] }
+    }
   }
 }
 
