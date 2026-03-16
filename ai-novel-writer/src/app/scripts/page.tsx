@@ -211,37 +211,29 @@ export default function ScriptsPage() {
                         </CardTitle>
                       </Link>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger className="h-8 w-8">
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/scripts/${project.id}`}>
-                              <FileText className="h-4 w-4 mr-2" />
-                              查看详情
-                            </Link>
+                          <DropdownMenuItem onClick={() => router.push(`/scripts/${project.id}`)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            查看详情
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/scripts/${project.id}/edit`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              编辑剧本
-                            </Link>
+                          <DropdownMenuItem onClick={() => router.push(`/scripts/${project.id}/edit`)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            编辑剧本
                           </DropdownMenuItem>
                           {project.status === "draft" && (
-                            <DropdownMenuItem asChild>
-                              <Link href={`/scripts/${project.id}/generate`}>
-                                <PlayCircle className="h-4 w-4 mr-2" />
-                                开始生成
-                              </Link>
+                            <DropdownMenuItem onClick={() => router.push(`/scripts/${project.id}/generate`)}>
+                              <PlayCircle className="h-4 w-4 mr-2" />
+                              开始生成
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem asChild>
-                            <Link href={`/scripts/${project.id}/export`}>
-                              <Download className="h-4 w-4 mr-2" />
-                              导出
-                            </Link>
+                          <DropdownMenuItem onClick={() => router.push(`/scripts/${project.id}/export`)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            导出
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
