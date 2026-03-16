@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Plus, Film, FileText, Upload, PenTool, Loader2 } from "lucide-react"
+import { ArrowLeft, Plus, Film, FileText, Upload, PenTool, Loader2, Sparkles, Check } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 // Genre options
@@ -45,6 +45,23 @@ export default function NewScriptPage() {
   const [genre, setGenre] = useState("")
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // AI suggestion states
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestions, setSuggestions] = useState<{
+    title: string
+    description: string
+    genre: string
+    reasoning: string
+  } | null>(null)
+
+  // For ORIGINAL mode: multiple AI suggestions
+  const [originalSuggestions, setOriginalSuggestions] = useState<Array<{
+    title: string
+    description: string
+    reasoning: string
+  }>>([])
+  const [generatingOriginalSuggestions, setGeneratingOriginalSuggestions] = useState(false)
 
   // File upload state
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; content: string }>>([])
@@ -122,6 +139,106 @@ export default function NewScriptPage() {
     if (sourceType === "EXTERNAL" && uploadedFiles.length === 0) return "请上传至少一个文件"
     return null
   }
+
+  // Get content for AI suggestion
+  const getContentForSuggestion = (): string => {
+    if (sourceType === "OWN_PROJECT" && selectedProjectId) {
+      const project = projects.find(p => p.id === selectedProjectId)
+      return project?.title || ""
+    }
+    if (sourceType === "EXTERNAL" && uploadedFiles.length > 0) {
+      return uploadedFiles.map(f => f.content).join("\n\n").slice(0, 1000)
+    }
+    if (sourceType === "PASTE" && pastedChapters.length > 0) {
+      return pastedChapters.map(c => c.content).join("\n\n").slice(0, 1000)
+    }
+    return ""
+  }
+
+  // Trigger AI suggestion
+  const triggerSuggestion = async () => {
+    const content = getContentForSuggestion()
+    if (!content) {
+      setError("请先选择或输入内容")
+      return
+    }
+
+    setSuggesting(true)
+    setError(null)
+
+    try {
+      const res = await fetch("/api/scripts/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          sourceType,
+          sourceProjectId: selectedProjectId,
+        }),
+      })
+
+      if (!res.ok) {
+        throw new Error("AI 推荐失败")
+      }
+
+      const data = await res.json()
+      setSuggestions(data.suggestions)
+    } catch (err) {
+      setError("AI 推荐失败，请稍后重试")
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
+  // Apply AI suggestions
+  const applySuggestions = () => {
+    if (suggestions) {
+      setTitle(suggestions.title)
+      setDescription(suggestions.description)
+      setGenre(suggestions.genre)
+    }
+  }
+
+  // Apply single original suggestion
+  const applyOriginalSuggestion = (suggestion: { title: string; description: string }) => {
+    setTitle(suggestion.title)
+    setDescription(suggestion.description)
+  }
+
+  // Generate suggestions for ORIGINAL mode
+  const generateOriginalSuggestions = async () => {
+    if (!genre) return
+
+    setGeneratingOriginalSuggestions(true)
+    try {
+      const res = await fetch("/api/scripts/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceType: "ORIGINAL",
+          genre,
+        }),
+      })
+
+      if (!res.ok) throw new Error("获取推荐失败")
+
+      const data = await res.json()
+      setOriginalSuggestions(data.suggestions || [])
+    } catch (err) {
+      console.error("Failed to generate original suggestions:", err)
+    } finally {
+      setGeneratingOriginalSuggestions(false)
+    }
+  }
+
+  // Trigger suggestion generation when genre changes in ORIGINAL mode
+  useEffect(() => {
+    if (sourceType === "ORIGINAL" && genre) {
+      generateOriginalSuggestions()
+    } else {
+      setOriginalSuggestions([])
+    }
+  }, [genre, sourceType])
 
   // Handle submit
   const handleSubmit = async () => {
@@ -248,7 +365,10 @@ export default function NewScriptPage() {
               ].map((type) => (
                 <button
                   key={type.id}
-                  onClick={() => setSourceType(type.id)}
+                  onClick={() => {
+                    setSourceType(type.id)
+                    setSuggestions(null) // Reset suggestions when changing source type
+                  }}
                   className={`p-4 border rounded-lg transition-all ${
                     sourceType === type.id
                       ? 'border-primary bg-primary/5 text-primary'
@@ -266,6 +386,70 @@ export default function NewScriptPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Suggestion Card */}
+        {sourceType && sourceType !== "ORIGINAL" && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    AI 智能推荐
+                  </CardTitle>
+                  <CardDescription>让 AI 根据您的内容自动推荐标题、描述和题材</CardDescription>
+                </div>
+                {!suggestions ? (
+                  <Button
+                    onClick={triggerSuggestion}
+                    disabled={suggesting || !getContentForSuggestion()}
+                    size="sm"
+                  >
+                    {suggesting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        分析中...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        获取推荐
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button onClick={applySuggestions} size="sm">
+                    <Check className="h-4 w-4 mr-2" />
+                    应用推荐
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            {suggestions && (
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="text-xs text-muted-foreground mb-1">推荐标题</div>
+                    <div className="font-medium">{suggestions.title}</div>
+                  </div>
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="text-xs text-muted-foreground mb-1">推荐描述</div>
+                    <div className="text-sm">{suggestions.description}</div>
+                  </div>
+                  <div className="p-3 bg-background rounded-lg border">
+                    <div className="text-xs text-muted-foreground mb-1">推荐题材</div>
+                    <div className="inline-flex px-2 py-1 bg-primary/10 text-primary rounded text-sm">
+                      {suggestions.genre}
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground italic">
+                    💡 {suggestions.reasoning}
+                  </div>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
 
         {/* Basic Info Form */}
         <Card className="mb-6">
@@ -438,19 +622,71 @@ export default function NewScriptPage() {
         )}
 
         {sourceType === "ORIGINAL" && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>原创创作</CardTitle>
-              <CardDescription>创建一个空白的剧本项目，稍后可以在编辑器中添加内容</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <PenTool className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="font-medium">空白项目</p>
-                <p className="text-sm mt-1">创建后可在编辑器中添加场景、角色和镜头</p>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>原创创作</CardTitle>
+                <CardDescription>创建一个空白的剧本项目，稍后可以在编辑器中添加内容</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <PenTool className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium">空白项目</p>
+                  <p className="text-sm mt-1">创建后可在编辑器中添加场景、角色和镜头</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Suggestions for ORIGINAL mode */}
+            {genre && (
+              <Card className="mb-6 border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        AI 创意推荐
+                      </CardTitle>
+                      <CardDescription>基于"{genre}"题材的创意灵感</CardDescription>
+                    </div>
+                    {generatingOriginalSuggestions && (
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    )}
+                  </div>
+                </CardHeader>
+                {originalSuggestions.length > 0 && (
+                  <CardContent>
+                    <div className="space-y-3">
+                      {originalSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="p-4 bg-background rounded-lg border hover:border-primary/50 transition-colors cursor-pointer"
+                          onClick={() => applyOriginalSuggestion(suggestion)}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="font-medium mb-1">{suggestion.title}</div>
+                              <div className="text-sm text-muted-foreground">{suggestion.description}</div>
+                              <div className="text-xs text-muted-foreground mt-2 italic">
+                                💡 {suggestion.reasoning}
+                              </div>
+                            </div>
+                            <Button size="sm" variant="outline">
+                              <Check className="h-4 w-4 mr-1" />
+                              使用
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      点击任意创意即可应用到上方表单
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+            )}
+          </>
         )}
 
         {/* Submit Button */}
