@@ -622,71 +622,69 @@ export default function NewScriptPage() {
         )}
 
         {sourceType === "ORIGINAL" && (
-          <>
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>原创创作</CardTitle>
-                <CardDescription>创建一个空白的剧本项目，稍后可以在编辑器中添加内容</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <PenTool className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium">空白项目</p>
-                  <p className="text-sm mt-1">创建后可在编辑器中添加场景、角色和镜头</p>
-                </div>
-              </CardContent>
-            </Card>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>原创创作</CardTitle>
+              <CardDescription>创建一个空白的剧本项目，稍后可以在编辑器中添加内容</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <PenTool className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="font-medium">空白项目</p>
+                <p className="text-sm mt-1">创建后可在编辑器中添加场景、角色和镜头</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-            {/* AI Suggestions for ORIGINAL mode */}
-            {genre && (
-              <Card className="mb-6 border-primary/20 bg-primary/5">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-primary" />
-                        AI 创意推荐
-                      </CardTitle>
-                      <CardDescription>基于"{genre}"题材的创意灵感</CardDescription>
-                    </div>
-                    {generatingOriginalSuggestions && (
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    )}
-                  </div>
-                </CardHeader>
-                {originalSuggestions.length > 0 && (
-                  <CardContent>
-                    <div className="space-y-3">
-                      {originalSuggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          className="p-4 bg-background rounded-lg border hover:border-primary/50 transition-colors cursor-pointer"
-                          onClick={() => applyOriginalSuggestion(suggestion)}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <div className="font-medium mb-1">{suggestion.title}</div>
-                              <div className="text-sm text-muted-foreground">{suggestion.description}</div>
-                              <div className="text-xs text-muted-foreground mt-2 italic">
-                                💡 {suggestion.reasoning}
-                              </div>
-                            </div>
-                            <Button size="sm" variant="outline">
-                              <Check className="h-4 w-4 mr-1" />
-                              使用
-                            </Button>
+        {/* AI Suggestions for ORIGINAL mode - moved after Basic Info */}
+        {sourceType === "ORIGINAL" && genre && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    AI 创意推荐
+                  </CardTitle>
+                  <CardDescription>基于"{genre}"题材的创意灵感</CardDescription>
+                </div>
+                {generatingOriginalSuggestions && (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                )}
+              </div>
+            </CardHeader>
+            {originalSuggestions.length > 0 && (
+              <CardContent>
+                <div className="space-y-3">
+                  {originalSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="p-4 bg-background rounded-lg border hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => applyOriginalSuggestion(suggestion)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium mb-1">{suggestion.title}</div>
+                          <div className="text-sm text-muted-foreground">{suggestion.description}</div>
+                          <div className="text-xs text-muted-foreground mt-2 italic">
+                            💡 {suggestion.reasoning}
                           </div>
                         </div>
-                      ))}
+                        <Button size="sm" variant="outline">
+                          <Check className="h-4 w-4 mr-1" />
+                          使用
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-3 text-center">
-                      点击任意创意即可应用到上方表单
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  点击任意创意即可应用到上方表单
+                </p>
+              </CardContent>
             )}
-          </>
+          </Card>
         )}
 
         {/* Submit Button */}
