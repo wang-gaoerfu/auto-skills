@@ -1,11 +1,11 @@
 /**
- * 剧本分析 API
+ * 弧本分析 API
  *
  * POST /api/scripts/[id]/analyze
  * - 分析章节内容，提取场景、角色信息
- * - 支持流式输出（SSE）
+ * - 支持流式输出（SSE)
  *
- * GET /api/scripts/[id]/analyze
+ * GET / api/scripts/[id]/analyze
  * - 获取分析状态和结果
  */
 
@@ -16,16 +16,12 @@ import { ScriptAIService } from "@/lib/script/ai-service"
 import { ScriptErrorCode, SCRIPT_MEMBERSHIP_QUOTAS, ScriptMembershipPlan } from "@/lib/script/types"
 import { getScriptMembership, getQuota, checkDailyGenerationQuota, incrementDailyGeneration } from "@/lib/script/utils"
 
-// ============================================
-// 类型定义
-// ============================================
-
 interface AnalyzeRequest {
   sourceIds?: string[] // 指定要分析的素材 ID，不传则分析全部
   options?: {
-    extractCharacters?: boolean // 是否提取角色（默认 true）
-    extractScenes?: boolean // 是否提取场景（默认 true）
-    overwrite?: boolean // 是否覆盖已有数据（默认 false）
+    extractCharacters?: boolean // 是否提取角色（默认 true)
+    extractScenes?: boolean // 是否提取场景（默认 true)
+    overwrite?: boolean // 是否覆盖已有数据(默认 false)
   }
 }
 
@@ -68,7 +64,9 @@ export async function POST(
       )
     }
 
-    const { id: projectId } = await params
+    const paramsData = await params
+    const projectId = paramsData.id
+    const userId = session.user.id
 
     // 获取项目
     const project = await prisma.scriptProject.findFirst({
@@ -112,6 +110,11 @@ export async function POST(
       overwrite: body.options?.overwrite ?? false,
     }
 
+    console.log(`[Analyze] Starting analysis for project ${projectId}`, {
+      options,
+      sourceCount: project.sources.length,
+    })
+
     // 获取要分析的素材
     let sourcesToAnalyze = project.sources
     if (body.sourceIds && body.sourceIds.length > 0) {
@@ -119,6 +122,8 @@ export async function POST(
         body.sourceIds!.includes(s.id)
       )
     }
+
+    console.log(`[Analyze] Sources to analyze: ${sourcesToAnalyze.length}`)
 
     if (sourcesToAnalyze.length === 0) {
       return NextResponse.json(
@@ -147,43 +152,17 @@ export async function POST(
       },
     })
 
-    // 异步执行分析
-    const result = await performAnalysis(
-      projectId,
-      sourcesToAnalyze,
-      options,
-      task.id
-    )
-
-    // 更新任务状态
-    await prisma.scriptGenerationTask.update({
-      where: { id: task.id },
-      data: {
-        status: "completed",
-        completedAt: new Date(),
-      },
+    // 后台执行分析（不阻塞响应）
+    performAnalysisInBackground(projectId, sourcesToAnalyze, options, task.id, userId).catch((error) => {
+      console.error(`[Analyze] Background analysis failed:`, error)
+      updateTaskStatus(projectId, task.id, "failed", error)
     })
 
-    // 更新项目状态
-    await prisma.scriptProject.update({
-      where: { id: projectId },
-      data: {
-        status: "paused",
-        subStatus: null,
-        progress: 50, // 分析完成，进度 50%
-      },
-    })
-
-    // 增加每日生成次数
-    await incrementDailyGeneration(session.user.id)
-
+    // 立即返回任务 ID
     return NextResponse.json({
       success: true,
       taskId: task.id,
-      result: {
-        charactersExtracted: result.characters.length,
-        scenesExtracted: result.scenes.length,
-      },
+      message: "分析任务已启动，正在后台处理中",
     })
   } catch (error) {
     console.error("Analyze error:", error)
@@ -199,112 +178,10 @@ export async function POST(
 }
 
 // ============================================
-// GET - 获取分析状态
+// 后台分析函数
 // ============================================
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized", code: ScriptErrorCode.UNAUTHORIZED },
-        { status: 401 }
-      )
-    }
-
-    const { id: projectId } = await params
-
-    // 获取项目和分析结果
-    const project = await prisma.scriptProject.findFirst({
-      where: {
-        id: projectId,
-        userId: session.user.id,
-      },
-      include: {
-        characters: {
-          orderBy: { createdAt: "asc" },
-        },
-        scenes: {
-          orderBy: { sceneNumber: "asc" },
-          include: {
-            shots: {
-              orderBy: { shotNumber: "asc" },
-            },
-          },
-        },
-        generationTasks: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-      },
-    })
-
-    if (!project) {
-      return NextResponse.json(
-        { error: "Project not found", code: ScriptErrorCode.PROJECT_NOT_FOUND },
-        { status: 404 }
-      )
-    }
-
-    // 获取最新的分析任务
-    const latestTask = project.generationTasks[0]
-
-    return NextResponse.json({
-      project: {
-        id: project.id,
-        title: project.title,
-        status: project.status,
-        subStatus: project.subStatus,
-        progress: project.progress,
-      },
-      analysis: {
-        characters: project.characters.map((c) => ({
-          id: c.id,
-          name: c.name,
-          role: c.role,
-          gender: c.gender,
-          ageRange: c.ageRange,
-          appearance: c.appearance,
-          personality: c.personality,
-          shotCount: c.shotCount,
-        })),
-        scenes: project.scenes.map((s) => ({
-          id: s.id,
-          sceneNumber: s.sceneNumber,
-          title: s.title,
-          location: s.location,
-          time: s.timeOfDay,
-          mood: s.mood,
-          summary: s.description || "",
-          shotCount: s.shots.length,
-        })),
-        task: latestTask
-          ? {
-              id: latestTask.id,
-              status: latestTask.status,
-              progress: latestTask.progress,
-              error: latestTask.errorMessage,
-            }
-          : null,
-      },
-    })
-  } catch (error) {
-    console.error("Get analysis error:", error)
-    return NextResponse.json(
-      { error: "Failed to get analysis" },
-      { status: 500 }
-    )
-  }
-}
-
-// ============================================
-// 分析执行函数
-// ============================================
-
-async function performAnalysis(
+async function performAnalysisInBackground(
   projectId: string,
   sources: Array<{
     id: string
@@ -317,8 +194,11 @@ async function performAnalysis(
     extractScenes: boolean
     overwrite: boolean
   },
-  taskId: string
-): Promise<{ characters: any[]; scenes: any[] }> {
+  taskId: string,
+  userId: string
+): Promise<void> {
+  console.log(`[Analyze] Starting background analysis for project ${projectId}`)
+
   const aiService = new ScriptAIService()
   const allCharacters: Map<string, CharacterAnalysis> = new Map()
   const allScenes: SceneAnalysis[] = []
@@ -327,10 +207,14 @@ async function performAnalysis(
   const totalSteps = sources.length * 2
 
   for (const source of sources) {
+    console.log(`[Analyze] Processing source: ${source.chapterTitle}`)
+
     // 提取角色
     if (options.extractCharacters) {
       try {
+        console.log(`[Analyze] Extracting characters from: ${source.chapterTitle}`)
         const charactersResult = await aiService.extractCharacters(source.content)
+        console.log(`[Analyze] Found ${charactersResult.characters.length} characters`)
 
         for (const character of charactersResult.characters) {
           // 检查是否已存在同名角色
@@ -348,14 +232,16 @@ async function performAnalysis(
           },
         })
       } catch (error) {
-        console.error(`Failed to extract characters from source ${source.id}:`, error)
+        console.error(`[Analyze] Failed to extract characters from source ${source.id}:`, error)
       }
     }
 
     // 提取场景
     if (options.extractScenes) {
       try {
+        console.log(`[Analyze] Analyzing scenes from: ${source.chapterTitle}`)
         const scenesResult = await aiService.analyzeChapter(source.chapterTitle, source.content)
+        console.log(`[Analyze] Found ${scenesResult.scenes.length} scenes`)
 
         for (const scene of scenesResult.scenes) {
           allScenes.push({
@@ -373,10 +259,12 @@ async function performAnalysis(
           },
         })
       } catch (error) {
-        console.error(`Failed to extract scenes from source ${source.id}:`, error)
+        console.error(`[Analyze] Failed to extract scenes from source ${source.id}:`, error)
       }
     }
   }
+
+  console.log(`[Analyze] Total: ${allCharacters.size} characters, ${allScenes.length} scenes`)
 
   // 保存角色到数据库
   const savedCharacters: any[] = []
@@ -472,8 +360,160 @@ async function performAnalysis(
     },
   })
 
-  return {
-    characters: savedCharacters,
-    scenes: savedScenes,
+  // 更新任务状态为完成
+  await updateTaskStatus(projectId, taskId, "completed")
+  console.log(`[Analyze] Analysis completed for project ${projectId}`)
+}
+
+// ============================================
+// 辅助函数
+// ============================================
+
+async function updateTaskStatus(
+  projectId: string,
+  taskId: string,
+  status: "completed" | "failed",
+  error?: any
+) {
+  try {
+    const updateData: any = {
+      status,
+      completedAt: status === "completed" ? new Date() : undefined,
+    }
+
+    if (error) {
+      updateData.errorMessage = error instanceof Error ? error.message : String(error)
+    }
+
+    await prisma.scriptGenerationTask.update({
+      where: { id: taskId },
+      data: updateData,
+    })
+
+    if (status === "completed") {
+      // 更新项目状态
+      await prisma.scriptProject.update({
+        where: { id: projectId },
+        data: {
+          status: "paused",
+          subStatus: null,
+          progress: 50,
+        },
+      })
+
+      // 增加每日生成次数 - 从项目获取用户 ID
+      const project = await prisma.scriptProject.findUnique({
+        where: { id: projectId },
+        select: { userId: true },
+      })
+      if (project?.userId) {
+        await incrementDailyGeneration(project.userId)
+      }
+    }
+  } catch (err) {
+    console.error(`[Analyze] Failed to update task status:`, err)
+  }
+}
+
+// ============================================
+// GET - 获取分析状态
+// ============================================
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized", code: ScriptErrorCode.UNAUTHORIZED },
+        { status: 401 }
+      )
+    }
+
+    const paramsData = await params
+    const projectId = paramsData.id
+
+    // 获取项目和分析结果
+    const project = await prisma.scriptProject.findFirst({
+      where: {
+        id: projectId,
+        userId: session.user.id,
+      },
+      include: {
+        characters: {
+          orderBy: { createdAt: "asc" },
+        },
+        scenes: {
+          orderBy: { sceneNumber: "asc" },
+          include: {
+            shots: {
+              orderBy: { shotNumber: "asc" },
+            },
+          },
+        },
+        generationTasks: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
+    })
+
+    if (!project) {
+      return NextResponse.json(
+        { error: "Project not found", code: ScriptErrorCode.PROJECT_NOT_FOUND },
+        { status: 404 }
+      )
+    }
+
+    // 获取最新的分析任务
+    const latestTask = project.generationTasks[0]
+
+    return NextResponse.json({
+      project: {
+        id: project.id,
+        title: project.title,
+        status: project.status,
+        subStatus: project.subStatus,
+        progress: project.progress,
+      },
+      analysis: {
+        characters: project.characters.map((c) => ({
+          id: c.id,
+          name: c.name,
+          role: c.role,
+          gender: c.gender,
+          ageRange: c.ageRange,
+          appearance: c.appearance,
+          personality: c.personality,
+          shotCount: c.shotCount,
+        })),
+        scenes: project.scenes.map((s) => ({
+          id: s.id,
+          sceneNumber: s.sceneNumber,
+          title: s.title,
+          location: s.location,
+          time: s.timeOfDay,
+          mood: s.mood,
+          summary: s.description || "",
+          shotCount: s.shots.length,
+        })),
+        task: latestTask
+          ? {
+            id: latestTask.id,
+            status: latestTask.status,
+            progress: latestTask.progress,
+            error: latestTask.errorMessage,
+          }
+          : null
+      },
+    })
+  } catch (error) {
+    console.error("Get analysis error:", error)
+    return NextResponse.json(
+      { error: "Failed to get analysis" },
+      { status: 500 }
+    )
   }
 }

@@ -26,6 +26,7 @@ import {
   Clock,
   Loader2,
   CheckCircle,
+  Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -328,8 +329,14 @@ export default function ScriptEditPage() {
                     </div>
                   ))}
                   {scenes.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground text-sm">
-                      暂无场景
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Film className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p className="text-sm">暂无场景</p>
+                      <p className="text-xs mt-1 mb-4">使用 AI 自动生成分镜场景</p>
+                      <Button size="sm" onClick={() => router.push(`/scripts/${projectId}/generate`)}>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        AI 一键生成
+                      </Button>
                     </div>
                   )}
                 </div>

@@ -33,6 +33,7 @@ import {
   Download,
   Edit,
   ExternalLink,
+  Crown,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -140,11 +141,17 @@ export default function ScriptsPage() {
       {/* Header */}
       <header className="border-b">
         <div className="container flex h-16 items-center justify-between px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <PenTool className="h-6 w-6" />
-            <span className="text-xl font-bold">AI小说创作能手</span>
+          <Link href="/scripts" className="flex items-center gap-2">
+            <Film className="h-6 w-6" />
+            <span className="text-xl font-bold">剧本工坊</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link href="/scripts/membership">
+              <Button variant="outline" size="sm">
+                <Crown className="h-4 w-4 mr-2 text-amber-500" />
+                会员中心
+              </Button>
+            </Link>
             <Link href="/dashboard">
               <Button variant="ghost">返回仪表盘</Button>
             </Link>
@@ -211,10 +218,8 @@ export default function ScriptsPage() {
                         </CardTitle>
                       </Link>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => router.push(`/scripts/${project.id}`)}>
@@ -310,7 +315,7 @@ export default function ScriptsPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
             <DialogDescription>

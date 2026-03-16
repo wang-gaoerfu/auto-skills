@@ -27,11 +27,49 @@ import {
   ExternalLink,
   Sparkles,
   Loader2,
+  Eye,
+  Clock,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 // Script project interface
+interface ScriptSource {
+  id: string
+  chapterTitle: string
+  content: string
+  wordCount: number
+  order: number
+}
+
+interface ScriptCharacter {
+  id: string
+  name: string
+  role: string | null
+  description: string | null
+  shotCount: number
+}
+
+interface ScriptScene {
+  id: string
+  sceneNumber: number
+  title: string
+  description: string | null
+  totalDuration: number
+  order: number
+  _count?: {
+    shots: number
+  }
+  shots?: Array<{
+    id: string
+    shotNumber: string
+    status: string
+  }>
+}
+
 interface ScriptProject {
   id: string
   title: string
@@ -52,29 +90,9 @@ interface ScriptProject {
     characters: number
     scenes: number
   }
-  sources?: Array<{
-    id: string
-    chapterTitle: string
-    wordCount: number
-  }>
-  characters?: Array<{
-    id: string
-    name: string
-    role: string | null
-    shotCount: number
-  }>
-  scenes?: Array<{
-    id: string
-    sceneNumber: number
-    title: string
-    shotCount: number
-    totalDuration: number
-    shots?: Array<{
-      id: string
-      shotNumber: string
-      status: string
-    }>
-  }>
+  sources?: ScriptSource[]
+  characters?: ScriptCharacter[]
+  scenes?: ScriptScene[]
   generationTasks?: Array<{
     id: string
     status: string
@@ -98,6 +116,7 @@ const SOURCE_TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode 
   OWN_PROJECT: { label: "自有小说", icon: <FileText className="h-3 w-3" /> },
   EXTERNAL: { label: "外部导入", icon: <ExternalLink className="h-3 w-3" /> },
   ORIGINAL: { label: "原创创作", icon: <Sparkles className="h-3 w-3" /> },
+  PASTE: { label: "粘贴文本", icon: <FileText className="h-3 w-3" /> },
 }
 
 export default function ScriptProjectDetailPage() {
@@ -110,6 +129,13 @@ export default function ScriptProjectDetailPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Preview dialog state
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [previewSource, setPreviewSource] = useState<ScriptSource | null>(null)
+
+  // Analysis state
+  const [analyzing, setAnalyzing] = useState(false)
 
   useEffect(() => {
     async function fetchProject() {
@@ -158,12 +184,60 @@ export default function ScriptProjectDetailPage() {
 
   async function handleStartGeneration() {
     if (!project) return
-    router.push(`/scripts/${project.id}/generate`)
+
+    // 检查是否有素材
+    if (!project.sources || project.sources.length === 0) {
+      alert("请先导入素材内容")
+      return
+    }
+
+    setAnalyzing(true)
+    try {
+      const res = await fetch(`/api/scripts/${project.id}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          options: {
+            extractCharacters: true,
+            extractScenes: true,
+            overwrite: false,
+          },
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "分析失败")
+      }
+
+      const result = await res.json()
+
+      // 异步模式：任务已启动，提示用户刷新查看进度
+      if (result.success && result.taskId) {
+        alert("分析任务已启动！AI 正在后台分析素材，请稍后刷新页面查看结果。")
+        // 3秒后自动刷新
+        setTimeout(() => window.location.reload(), 3000)
+      } else if (result.result) {
+        // 兼容旧格式
+        alert(`分析完成！提取了 ${result.result.charactersExtracted} 个角色，${result.result.scenesExtracted} 个场景`)
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error)
+      alert(error instanceof Error ? error.message : "分析失败，请稍后重试")
+    } finally {
+      setAnalyzing(false)
+    }
   }
 
   async function handleExport() {
     if (!project) return
     router.push(`/scripts/${project.id}/export`)
+  }
+
+  function openPreview(source: ScriptSource) {
+    setPreviewSource(source)
+    setPreviewDialogOpen(true)
   }
 
   if (loading) {
@@ -186,7 +260,7 @@ export default function ScriptProjectDetailPage() {
   const sourceInfo = SOURCE_TYPE_CONFIG[project.sourceType] || SOURCE_TYPE_CONFIG.ORIGINAL
 
   // Calculate totals from scenes
-  const totalShots = project.scenes?.reduce((sum, scene) => sum + (scene.shots?.length || 0), 0) || 0
+  const totalShots = project.scenes?.reduce((sum, scene) => sum + (scene._count?.shots || scene.shots?.length || 0), 0) || 0
   const totalDuration = project.scenes?.reduce((sum, scene) => sum + (scene.totalDuration || 0), 0) || 0
 
   return (
@@ -331,11 +405,21 @@ export default function ScriptProjectDetailPage() {
                   <div className="space-y-2">
                     {project.sources.map((source, index) => (
                       <div key={source.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50">
-                        <div className="flex items-center gap-3">
-                          <span className="text-muted-foreground text-sm">第{index + 1} 章</span>
-                          <span className="font-medium">{source.chapterTitle}</span>
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-muted-foreground text-sm shrink-0">第{index + 1} 章</span>
+                          <span className="font-medium truncate">{source.chapterTitle}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground">{source.wordCount} 字</span>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-sm text-muted-foreground">{source.wordCount} 字</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openPreview(source)}
+                            title="预览内容"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -352,23 +436,33 @@ export default function ScriptProjectDetailPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>角色列表</CardTitle>
-                <Link href={`/scripts/${project.id}/edit`}>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    添加角色
-                  </Button>
-                </Link>
+                {project.characters && project.characters.length > 0 && (
+                  <Link href={`/scripts/${project.id}/edit`}>
+                    <Button size="sm" variant="outline">
+                      <Edit className="h-4 w-4 mr-2" />
+                      编辑角色
+                    </Button>
+                  </Link>
+                )}
               </CardHeader>
               <CardContent>
                 {project.characters && project.characters.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {project.characters.map((character) => (
-                      <div key={character.id} className="p-3 border rounded-lg">
-                        <div className="font-medium">{character.name}</div>
-                        {character.role && (
-                          <div className="text-sm text-muted-foreground">{character.role}</div>
+                      <div key={character.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{character.name}</span>
+                          {character.role && (
+                            <Badge variant="secondary" className="text-xs">{character.role}</Badge>
+                          )}
+                        </div>
+                        {character.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                            {character.description}
+                          </p>
                         )}
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-muted-foreground">
                           出场 {character.shotCount} 次
                         </div>
                       </div>
@@ -376,7 +470,22 @@ export default function ScriptProjectDetailPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    暂无角色信息
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p>暂无角色信息</p>
+                    <p className="text-sm mt-2 mb-4">点击下方按钮让 AI 自动提取角色</p>
+                    <Button onClick={handleStartGeneration} disabled={analyzing || project.status === "generating"}>
+                      {analyzing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          AI 分析中...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          开始生成
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -387,24 +496,41 @@ export default function ScriptProjectDetailPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>场景列表</CardTitle>
-                <Link href={`/scripts/${project.id}/edit`}>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    添加场景
-                  </Button>
-                </Link>
+                {project.scenes && project.scenes.length > 0 && (
+                  <Link href={`/scripts/${project.id}/edit`}>
+                    <Button size="sm" variant="outline">
+                      <Edit className="h-4 w-4 mr-2" />
+                      编辑场景
+                    </Button>
+                  </Link>
+                )}
               </CardHeader>
               <CardContent>
                 {project.scenes && project.scenes.length > 0 ? (
                   <div className="space-y-3">
                     {project.scenes.map((scene) => (
-                      <div key={scene.id} className="p-3 border rounded-lg">
+                      <div key={scene.id} className="p-4 border rounded-lg">
                         <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">场景 {scene.sceneNumber}: {scene.title}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {scene.shots?.length || 0} 个镜头 · {scene.totalDuration} 秒
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                              {scene.sceneNumber}
                             </div>
+                            <div>
+                              <div className="font-medium">{scene.title}</div>
+                              {scene.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-1">{scene.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Film className="h-4 w-4" />
+                              {scene._count?.shots || scene.shots?.length || 0} 镜头
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              {scene.totalDuration} 秒
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -412,7 +538,22 @@ export default function ScriptProjectDetailPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    暂无场景信息
+                    <Film className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p>暂无场景信息</p>
+                    <p className="text-sm mt-2 mb-4">点击下方按钮让 AI 自动生成分镜场景</p>
+                    <Button onClick={handleStartGeneration} disabled={analyzing || project.status === "generating"}>
+                      {analyzing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          AI 分析中...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          开始生成
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -420,9 +561,31 @@ export default function ScriptProjectDetailPage() {
           </TabsContent>
         </Tabs>
 
+        {/* Preview Dialog */}
+        <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>{previewSource?.chapterTitle}</DialogTitle>
+              <DialogDescription>
+                {previewSource?.wordCount} 字
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {previewSource?.content || ""}
+                </ReactMarkdown>
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button onClick={() => setPreviewDialogOpen(false)}>关闭</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Delete Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>确认删除</DialogTitle>
               <DialogDescription>

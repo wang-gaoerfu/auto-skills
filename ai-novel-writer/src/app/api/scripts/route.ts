@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 const createScriptProjectSchema = z.object({
   title: z.string().min(1, "标题不能为空").max(100, "标题最多100字"),
   description: z.string().max(500, "描述最多500字").optional(),
-  sourceType: z.enum(["OWN_PROJECT", "EXTERNAL", "ORIGINAL"]).default("ORIGINAL"),
+  sourceType: z.enum(["OWN_PROJECT", "EXTERNAL", "PASTE", "ORIGINAL"]).default("ORIGINAL"),
   sourceProjectId: z.string().optional(),
   sourceNovelTitle: z.string().max(100).optional(),
   genre: z.string().max(50).optional(),
@@ -154,9 +154,9 @@ export async function POST(request: NextRequest) {
     console.error("Create script project error:", error)
 
     if (error instanceof z.ZodError) {
-      const zodError = error as unknown as { errors: Array<{ message: string }> }
+      const zodError = error as z.ZodError<unknown>
       return NextResponse.json(
-        { message: zodError.errors[0]?.message || "参数错误", code: ScriptErrorCode.INVALID_PARAMS },
+        { message: zodError.issues[0]?.message || "参数错误", code: ScriptErrorCode.INVALID_PARAMS },
         { status: 400 }
       )
     }

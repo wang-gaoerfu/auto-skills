@@ -58,7 +58,7 @@ export class DeepSeekClient {
     this.baseURL = config?.baseURL || process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com"
     this.model = config?.model || process.env.DEEPSEEK_MODEL || "deepseek-chat"
     this.maxRetries = config?.maxRetries || 3
-    this.timeout = config?.timeout || 60000
+    this.timeout = config?.timeout || 180000 // 3 分钟超时
   }
 
   /**
@@ -72,7 +72,9 @@ export class DeepSeekClient {
       maxTokens?: number
     }
   ): Promise<AIResponse> {
+    console.log(`[DeepSeek] Starting API request, attempt ${0}`)
     const request = buildDeepSeekRequest(systemPrompt, userPrompt, options)
+    console.log(`[DeepSeek] Request payload:`, JSON.stringify(request).slice(0, 200))
 
     let lastError: Error | null = null
 
@@ -81,6 +83,7 @@ export class DeepSeekClient {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), this.timeout)
 
+        console.log(`[DeepSeek] Sending request to ${this.baseURL}/v1/chat/completions`)
         const response = await fetch(`${this.baseURL}/v1/chat/completions`, {
           method: "POST",
           headers: {
@@ -93,12 +96,16 @@ export class DeepSeekClient {
 
         clearTimeout(timeoutId)
 
+        console.log(`[DeepSeek] Response received, status: ${response.status}`)
+
         if (!response.ok) {
           const errorText = await response.text()
+          console.error(`[DeepSeek] API error: ${response.status} - ${errorText}`)
           throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`)
         }
 
         const data = await response.json()
+        console.log(`[DeepSeek] Response parsed, content length: ${data.choices?.[0]?.message?.content.length || 0}`)
 
         return {
           content: data.choices[0]?.message?.content || "",
@@ -112,20 +119,23 @@ export class DeepSeekClient {
         }
       } catch (error) {
         lastError = error as Error
-        console.error(`DeepSeek API attempt ${attempt + 1} failed:`, error)
+        console.error(`[DeepSeek] API attempt ${attempt + 1} failed:`, error)
 
         // 如果是取消请求，不重试
         if ((error as Error).name === "AbortError") {
+          console.error(`[DeepSeek] Request timeout after ${this.timeout}ms`)
           throw new Error("Request timeout")
         }
 
         // 等待后重试
         if (attempt < this.maxRetries - 1) {
+          console.log(`[DeepSeek] Waiting ${1000 * (attempt + 1)}ms before retry...`)
           await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)))
         }
       }
     }
 
+    console.error(`[DeepSeek] All ${this.maxRetries} attempts failed`)
     throw lastError || new Error("Failed to call DeepSeek API")
   }
 

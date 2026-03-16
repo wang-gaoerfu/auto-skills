@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PenTool, Sparkles, BookOpen, Users, Layers, FolderOpen, Settings, Crown } from "lucide-react";
+import { PenTool, Sparkles, BookOpen, Users, Layers, FolderOpen, Settings, Crown, Film } from "lucide-react";
 
 export default async function Home() {
   const session = await auth();
@@ -40,7 +40,7 @@ export default async function Home() {
           </div>
 
           {/* 功能入口卡片 */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-12">
             <Link href="/dashboard">
               <Card className="hover:border-primary transition-colors cursor-pointer h-full">
                 <CardHeader>
@@ -52,6 +52,21 @@ export default async function Home() {
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 创建新项目、编辑章节、管理大纲
+              </CardContent>
+            </Card>
+            </Link>
+
+            <Link href="/scripts">
+              <Card className="hover:border-primary transition-colors cursor-pointer h-full">
+                <CardHeader>
+                  <Film className="h-10 w-10 mb-2 text-primary" />
+                  <CardTitle>剧本工坊</CardTitle>
+                  <CardDescription>
+                    小说转分镜剧本
+                  </CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                将小说转化为专业分镜剧本
               </CardContent>
             </Card>
             </Link>

@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PenTool, BookOpen, FileText, Settings, Crown, Users, FolderOpen, Layers } from "lucide-react"
+import { PenTool, BookOpen, FileText, Settings, Crown, Users, FolderOpen, Layers, Film } from "lucide-react"
 import Link from "next/link"
 import { HeaderNav } from "@/components/layout/user-nav"
 import { prisma } from "@/lib/prisma"
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-bold mb-8">欢迎回来，{user.name || "创作者"}</h1>
 
         {/* 快捷操作 */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-12">
           <Link href="/projects/new">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
@@ -50,6 +50,16 @@ export default async function DashboardPage() {
                 <FolderOpen className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle className="text-lg">我的项目</CardTitle>
                 <CardDescription>查看所有项目</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/scripts">
+            <Card className="hover:border-primary transition-colors cursor-pointer">
+              <CardHeader>
+                <Film className="h-8 w-8 mb-2 text-primary" />
+                <CardTitle className="text-lg">剧本工坊</CardTitle>
+                <CardDescription>小说转分镜剧本</CardDescription>
               </CardHeader>
             </Card>
           </Link>

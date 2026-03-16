@@ -243,7 +243,7 @@ export default function ReadPage({ params }: { params: Promise<{ id: string }> }
 
             {/* 设置按钮 */}
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="sm" title="阅读设置" />}>
+              <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground h-9 px-3" title="阅读设置">
                 <Settings className="h-4 w-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
