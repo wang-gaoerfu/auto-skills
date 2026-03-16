@@ -323,13 +323,9 @@ async function performAnalysisInBackground(
   }
 
   for (const scene of allScenes) {
-    // 获取场景中的角色 ID
-    const characterIds = scene.characters
-      .map((name) => {
-        const char = savedCharacters.find((c) => c.name === name)
-        return char ? { id: char.id } : null
-      })
-      .filter(Boolean) as { id: string }[]
+    // 注意：Schema 中 ScriptScene 没有与 ScriptCharacter 的直接关系
+    // 角色信息通过 ScriptShot.characterIds 存储
+    // 这里仅保存场景基本信息，角色信息在镜头生成时关联
 
     const saved = await prisma.scriptScene.create({
       data: {
@@ -341,12 +337,6 @@ async function performAnalysisInBackground(
         mood: scene.mood,
         description: scene.summary,
         order: scene.sceneNumber,
-        // 关联角色
-        ...(characterIds.length > 0 && {
-          characters: {
-            connect: characterIds,
-          },
-        }),
       },
     })
     savedScenes.push(saved)
