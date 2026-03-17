@@ -488,6 +488,17 @@ export async function GET(
           mood: s.mood,
           summary: s.description || "",
           shotCount: s.shots.length,
+          shots: s.shots.map((shot) => ({
+            id: shot.id,
+            shotNumber: shot.shotNumber,
+            shotType: shot.shotType,
+            angle: shot.angle,
+            duration: shot.duration,
+            visual: shot.visual,
+            audio: shot.audio,
+            status: shot.status,
+            order: shot.order,
+          })),
         })),
         task: latestTask
           ? {

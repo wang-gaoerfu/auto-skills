@@ -336,26 +336,26 @@ async function runGeneration(
           // 保存镜头
           let shotOrder = 1
           for (const shot of result.shots) {
-            const duration = parseDuration(shot.durationSeconds)
+            const duration = parseDuration(shot.durationSeconds || 5)
             const dialogueCount = (shot.dialogue || "").length > 0 ? 1 : 0
 
             await prisma.scriptShot.create({
               data: {
                 sceneId: scene.id,
                 shotNumber: `${scene.sceneNumber}-${shotOrder}`,
-                shotType: shot.shotType,
-                angle: shot.cameraMovement,
+                shotType: shot.shotType || "MS",
+                angle: shot.cameraMovement || "固定",
                 duration,
                 visual: {
-                  description: shot.description,
-                  mood: shot.moodNote,
-                  reference: shot.visualReference,
+                  description: shot.description || "",
+                  mood: shot.moodNote || "",
+                  reference: shot.visualReference || "",
                 },
                 audio: {
-                  action: shot.action,
-                  dialogue: shot.dialogue,
+                  action: shot.action || "",
+                  dialogue: shot.dialogue || "",
                 },
-                imagePrompt: shot.visualReference,
+                imagePrompt: shot.visualReference || "",
                 dialogueCount,
                 order: shotOrder,
                 status: "generated",
@@ -370,7 +370,7 @@ async function runGeneration(
             where: { id: scene.id },
             data: {
               shotCount: shotOrder - 1,
-              totalDuration: result.shots.reduce((sum, s) => sum + parseDuration(s.durationSeconds), 0),
+              totalDuration: result.shots.reduce((sum, s) => sum + parseDuration(s.durationSeconds || 5), 0),
             },
           })
 
@@ -401,14 +401,43 @@ async function runGeneration(
     // 释放锁
     await releaseGenerationLock(projectId, lockId)
 
-    // 更新项目状态
-    await prisma.scriptProject.update({
-      where: { id: projectId },
-      data: {
-        status: "paused",
-        subStatus: null,
+    // 检查是否所有场景都生成了镜头
+    const allScenes = await prisma.scriptScene.findMany({
+      where: { scriptProjectId: projectId },
+      select: {
+        id: true,
+        shotCount: true,
+        _count: { select: { shots: true } },
       },
     })
+
+    const completedScenes = allScenes.filter(s => (s.shotCount || 0) > 0 || s._count.shots > 0).length
+    const totalScenes = allScenes.length
+    const allScenesCompleted = totalScenes > 0 && completedScenes === totalScenes
+
+    // 根据完成情况更新状态
+    if (allScenesCompleted) {
+      // 所有场景都生成了镜头 → 已完成
+      await prisma.scriptProject.update({
+        where: { id: projectId },
+        data: {
+          status: "completed",
+          subStatus: null,
+          progress: 100,
+        },
+      })
+    } else {
+      // 不是所有场景都生成了镜头 → 创作中
+      const progress = totalScenes > 0 ? Math.round((completedScenes / totalScenes) * 100) : 0
+      await prisma.scriptProject.update({
+        where: { id: projectId },
+        data: {
+          status: "generating",
+          subStatus: null,
+          progress,
+        },
+      })
+    }
 
     // 增加每日生成次数
     await incrementDailyGeneration(userId)

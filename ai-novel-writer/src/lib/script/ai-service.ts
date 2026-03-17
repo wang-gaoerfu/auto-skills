@@ -346,7 +346,20 @@ export class ScriptAIService {
     console.log("[generateShots] Parsed result:", JSON.stringify(result).substring(0, 200))
     console.log("[generateShots] Shots count:", result.data?.length || 0)
 
-    return { shots: result.data || [] }
+    // 字段映射：AI 返回下划线格式，转换为驼峰格式
+    const mappedShots = (result.data || []).map((shot: any) => ({
+      shotNumber: shot.shot_number || shot.shotNumber || "",
+      shotType: shot.shot_type || shot.shotType || "MS",
+      cameraMovement: shot.camera_movement || shot.cameraMovement || "固定",
+      durationSeconds: shot.duration_seconds || shot.durationSeconds || 5,
+      description: shot.description || "",
+      action: shot.action || "",
+      dialogue: shot.dialogue || "",
+      moodNote: shot.mood_note || shot.moodNote || "",
+      visualReference: shot.visual_reference || shot.visualReference || "",
+    }))
+
+    return { shots: mappedShots }
   }
 
   /**
@@ -415,6 +428,9 @@ export class ScriptAIService {
       // 1. 修复多行字符串（将未闭合的引号内的换行符替换为空格）
       yamlContent = this.fixYamlMultilineStrings(yamlContent)
 
+      // 2. 移除重复的键（AI 有时会生成重复的键）
+      yamlContent = this.removeDuplicateKeys(yamlContent)
+
       // 使用 js-yaml 解析
       const parsed = yaml.load(yamlContent) as Record<string, unknown>
 
@@ -468,6 +484,47 @@ export class ScriptAIService {
     // 处理未闭合的最后行
     if (currentLine) {
       fixedLines.push(currentLine)
+    }
+
+    return fixedLines.join('\n')
+  }
+
+  /**
+   * 移除 YAML 中的重复键
+   * AI 有时会在同一个对象中生成重复的键，导致解析失败
+   */
+  private removeDuplicateKeys(yamlContent: string): string {
+    const lines = yamlContent.split('\n')
+    const fixedLines: string[] = []
+    const seenKeysInObject = new Set<string>()
+    let inArrayItem = false
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const trimmedLine = line.trim()
+
+      // 检测数组项开始（如 "- shot_number:")
+      if (trimmedLine.startsWith('- ')) {
+        // 新的数组项，重置已见键集合
+        seenKeysInObject.clear()
+        inArrayItem = true
+        fixedLines.push(line)
+        continue
+      }
+
+      // 检测键值对（如 "shot_number: \"5\"")
+      const keyMatch = trimmedLine.match(/^(\w+):\s*/)
+      if (keyMatch && inArrayItem) {
+        const key = keyMatch[1]
+        if (seenKeysInObject.has(key)) {
+          // 重复键，跳过这行
+          console.warn(`Skipping duplicate key: ${key}`)
+          continue
+        }
+        seenKeysInObject.add(key)
+      }
+
+      fixedLines.push(line)
     }
 
     return fixedLines.join('\n')

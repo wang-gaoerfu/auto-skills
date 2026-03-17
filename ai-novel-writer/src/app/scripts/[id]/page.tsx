@@ -401,7 +401,7 @@ export default function ScriptProjectDetailPage() {
                 <Edit className="h-4 w-4 mr-2" />
                 编辑内容
               </Button>
-              <Button onClick={handleStartGeneration} disabled={project.status === "generating"}>
+              <Button onClick={() => handleStartGeneration('all')} disabled={project.status === "generating"}>
                 <PlayCircle className="h-4 w-4 mr-2" />
                 {project.status === "generating" ? "生成中..." : "开始生成"}
               </Button>
@@ -594,7 +594,7 @@ export default function ScriptProjectDetailPage() {
                     <Film className="h-12 w-12 mx-auto mb-4 opacity-30" />
                     <p>暂无场景信息</p>
                     <p className="text-sm mt-2 mb-4">点击下方按钮让 AI 自动生成分镜场景</p>
-                    <Button onClick={handleStartGeneration} disabled={analyzing || project.status === "generating"}>
+                    <Button onClick={() => handleStartGeneration('all')} disabled={analyzing || project.status === "generating"}>
                       {analyzing ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -38,6 +38,19 @@ export async function GET(
             _count: {
               select: { shots: true },
             },
+            shots: {
+              orderBy: { order: "asc" },
+              select: {
+                id: true,
+                shotNumber: true,
+                shotType: true,
+                angle: true,
+                duration: true,
+                visual: true,
+                audio: true,
+                status: true,
+              },
+            },
           },
           orderBy: { order: "asc" },
         },

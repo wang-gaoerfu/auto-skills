@@ -143,7 +143,7 @@ export default function ScriptEditPage() {
   }, [projectId])
 
   // 加载镜头
-  const fetchShots = useCallback(async (sceneId: string) => {
+  const fetchShots = useCallback(async (sceneId: string): Promise<Shot[]> => {
     try {
       const response = await fetch(`/api/scripts/${projectId}/analyze`)
       if (response.ok) {
@@ -151,12 +151,16 @@ export default function ScriptEditPage() {
         const scene = data.analysis.scenes.find((s: Scene) => s.id === sceneId)
         if (scene && scene.shots) {
           setShots(scene.shots)
+          return scene.shots
         } else {
           setShots([])
+          return []
         }
       }
+      return []
     } catch (error) {
       console.error("Failed to fetch shots:", error)
+      return []
     }
   }, [projectId])
 
@@ -322,9 +326,12 @@ export default function ScriptEditPage() {
           const { project, stats } = data
 
           if (project.status === "generating") {
-            // 更新进度
-            setGeneratingProgress(project.progress || 0)
-            setGeneratingMessage(`生成中... ${project.progress || 0}% (${stats.completedScenes}/${stats.totalScenes} 场景)`)
+            // 更新进度 - 显示完成场景/总场景
+            const progressPercent = stats.totalScenes > 0
+              ? Math.round((stats.completedScenes / stats.totalScenes) * 100)
+              : 0
+            setGeneratingProgress(progressPercent)
+            setGeneratingMessage(`创作中... ${stats.completedScenes}/${stats.totalScenes} 场景`)
             attempts++
 
             if (attempts < maxAttempts) {
@@ -334,18 +341,28 @@ export default function ScriptEditPage() {
               setGenerating(false)
               setGeneratingMessage(null)
             }
-          } else if (project.status === "paused" || project.status === "completed") {
+          } else if (project.status === "completed") {
             // 生成完成
             setGeneratingProgress(100)
-            setGeneratingMessage("生成完成！")
-            showSavedMessage(`生成完成！共 ${stats.totalShots} 个镜头`)
+            setGeneratingMessage("创作完成！")
+            showSavedMessage(`创作完成！共 ${stats.totalShots} 个镜头`)
 
-            // 刷新镜头列表
+            // 刷新镜头列表（保持当前选中的场景）
             setTimeout(async () => {
               if (selectedScene) {
-                await fetchShots(selectedScene.id)
+                const newShots = await fetchShots(selectedScene.id)
+                // 更新当前选中的场景的镜头数量
+                setSelectedScene(prev => prev ? {
+                  ...prev,
+                  shotCount: newShots.length
+                } : null)
+                // 同时更新场景列表中的镜头数量
+                setScenes(prev => prev.map(s =>
+                  s.id === selectedScene.id
+                    ? { ...s, shotCount: newShots.length }
+                    : s
+                ))
               }
-              await fetchProject() // 刷新场景列表
               setGenerating(false)
               setGeneratingMessage(null)
             }, 1000)
