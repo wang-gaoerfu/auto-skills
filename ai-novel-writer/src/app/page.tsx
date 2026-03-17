@@ -40,7 +40,7 @@ export default async function Home() {
           </div>
 
           {/* 功能入口卡片 */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-12">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
             <Link href="/dashboard">
               <Card className="hover:border-primary transition-colors cursor-pointer h-full">
                 <CardHeader>

@@ -338,8 +338,14 @@ export class ScriptAIService {
       maxTokens: 4096,
     })
 
+    console.log("[generateShots] Raw response length:", response.content.length)
+    console.log("[generateShots] Raw response preview:", response.content.substring(0, 300))
+
     // 解析响应
     const result = this.parseYAMLResponse<any>(response.content, "shots")
+    console.log("[generateShots] Parsed result:", JSON.stringify(result).substring(0, 200))
+    console.log("[generateShots] Shots count:", result.data?.length || 0)
+
     return { shots: result.data || [] }
   }
 
@@ -405,6 +411,10 @@ export class ScriptAIService {
         yamlContent = content
       }
 
+      // 预处理：修复常见的 YAML 格式问题
+      // 1. 修复多行字符串（将未闭合的引号内的换行符替换为空格）
+      yamlContent = this.fixYamlMultilineStrings(yamlContent)
+
       // 使用 js-yaml 解析
       const parsed = yaml.load(yamlContent) as Record<string, unknown>
 
@@ -418,6 +428,49 @@ export class ScriptAIService {
       console.error("Original content:", content.substring(0, 500))
       return { data: [] as T[] }
     }
+  }
+
+  /**
+   * 修复 YAML 中的多行字符串问题
+   */
+  private fixYamlMultilineStrings(yamlContent: string): string {
+    // 将多行字符串值合并为单行（用空格连接）
+    // 处理类似 "xxx... 的未闭合字符串
+    const lines = yamlContent.split('\n')
+    const fixedLines: string[] = []
+    let inQuotedValue = false
+    let currentLine = ''
+
+    for (const line of lines) {
+      // 统计当前行中的引号数量
+      const quoteCount = (line.match(/"/g) || []).length
+
+      if (inQuotedValue) {
+        // 正在处理多行字符串值
+        currentLine += ' ' + line.trim()
+        if (quoteCount % 2 === 1) {
+          // 引号闭合了
+          fixedLines.push(currentLine)
+          currentLine = ''
+          inQuotedValue = false
+        }
+      } else {
+        if (quoteCount % 2 === 1 && line.trim().endsWith('"') === false) {
+          // 开始一个未闭合的多行字符串
+          inQuotedValue = true
+          currentLine = line
+        } else {
+          fixedLines.push(line)
+        }
+      }
+    }
+
+    // 处理未闭合的最后行
+    if (currentLine) {
+      fixedLines.push(currentLine)
+    }
+
+    return fixedLines.join('\n')
   }
 }
 
