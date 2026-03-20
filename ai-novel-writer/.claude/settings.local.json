@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: AI小说创作能手项目初始化和技术方案确定\n\n- 创建需求文档，定义9大功能模块\n- 确定技术栈：Next.js 14 + PostgreSQL + ChromaDB\n- 确定UI方案：shadcn/ui + 明暗主题\n- 确定认证方案：NextAuth.js + JWT\n- 确定会员系统：兑码激活 + 管理员审核\n- 确定邮箱服务：163邮箱验证码\n- 确定AI模型：DeepSeek V3 + Kimi + GLM-4-Flash\n- 确定向量方案：ChromaDB + BGE-large-zh\nEOF\n\\)\")",
-      "Bash(git push:*)"
-    ]
-  }
-}
